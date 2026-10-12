@@ -4,6 +4,12 @@ on:
     paths:
       - 'src/**'
       - 'e2e/**'
+      - 'index.html'
+      - 'index.source.html'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'scripts/**'
+      - '.github/workflows/pages.yml'
       - '.github/workflows/browser-smoke.yml'
   workflow_dispatch:
 permissions:
