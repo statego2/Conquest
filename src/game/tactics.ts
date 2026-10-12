@@ -30,7 +30,7 @@ export function battleForecast(state:GameState,from:number,to:number,commitment:
   return {outcome:troops>defense?'win':'lose',attacking:troops,defending:Math.ceil(defense),surviving:survivors,disadvantage:Math.max(0,Math.ceil(defense)-troops+1)};
 }
 
-export function uprisingCommitment(reserves:number,commitment:Commitment):number {
+export function uprisingCommitment(reserves:number,commitment:Commitment|1):number {
   if(reserves<REVOLT_MIN_RESERVES)return 0;
   // Enforce a minimum meaningful rebellion rather than consuming fractional scraps.
   return Math.min(Math.floor(reserves),Math.max(REVOLT_MIN_RESERVES,Math.floor(reserves*commitment)));
