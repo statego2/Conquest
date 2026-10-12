@@ -64,7 +64,8 @@ export function resolveBattle(state: GameState, owner: FactionId, id: number, at
   const target = state.territories[id];
   if (!target || attackers <= 0) return;
   if (target.owner === owner) {
-    target.troops = Math.min(MAX_TROOPS, target.troops + attackers);
+    // The cap limits local recruitment, not the size of an arriving field army.
+    target.troops += attackers;
     return;
   }
 
@@ -74,7 +75,7 @@ export function resolveBattle(state: GameState, owner: FactionId, id: number, at
   if (attackers * assault > target.troops * defense) {
     const previousOwner = target.owner;
     const losses = Math.ceil(target.troops * defense / assault);
-    target.troops = Math.max(1, Math.min(MAX_TROOPS, attackers - losses));
+    target.troops = Math.max(1, attackers - losses);
     target.owner = owner;
     target.unrest = previousOwner === null || target.capitalOf === owner ? 0 : 45;
     state.factions[owner].captures += 1;
@@ -107,7 +108,7 @@ export function mobilizeReserves(state: GameState, factionId: FactionId, territo
   const target = state.territories[territoryId];
   const faction = state.factions[factionId];
   if (!target || target.owner !== factionId || faction.reserves < 15) return false;
-  const troops = Math.min(MAX_TROOPS - target.troops, Math.floor(faction.reserves));
+  const troops = Math.floor(faction.reserves);
   if (troops <= 0) return false;
   target.troops += troops;
   faction.reserves -= troops;
