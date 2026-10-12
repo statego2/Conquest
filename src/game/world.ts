@@ -1,4 +1,4 @@
-import { FACTIONS, MAP_COLS, MAP_ROWS } from './config';
+import { FACTIONS, MANPOWER_CAP, MAP_COLS, MAP_ROWS } from './config';
 import type { FactionId, GameState, Terrain, Territory } from './types';
 
 // Seeded, deterministic: later we can replay games and verify leaderboard runs.
@@ -36,7 +36,7 @@ export function createGame(seed = 24102): GameState {
       const terrain: Terrain = roll < 0.2 ? 'highland' : roll < 0.38 ? 'fertile' : 'plain';
       territories.push({
         id: territoryId(col, row), col, row, terrain,
-        owner: null, troops: 7 + Math.floor(random() * 11),
+        owner: null, troops: 7 + Math.floor(random() * 11), manpower: 145 + Math.floor(random() * 26),
         capitalOf: null, unrest: 0, neighbours: hexNeighbours(col, row),
       });
     }
@@ -54,6 +54,7 @@ export function createGame(seed = 24102): GameState {
     home.terrain = 'citadel';
     home.owner = id;
     home.troops = 57;
+    home.manpower = MANPOWER_CAP;
     home.neighbours.slice(0, 3).forEach((neighbourId) => {
       const neighbour = territories[neighbourId];
       if (neighbour.owner === null) {
