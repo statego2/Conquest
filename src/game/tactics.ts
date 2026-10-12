@@ -27,7 +27,7 @@ export function battleForecast(state:GameState,from:number,to:number,commitment:
   if(target.owner===source.owner)return {outcome:'hold',attacking:troops,defending:target.troops,surviving:troops,disadvantage:0};
   const defense=target.troops*TERRAINS[target.terrain].defense;
   const survivors=Math.max(0,troops-Math.ceil(defense));
-  return {outcome:troops>defense?'win':'lose',attacking:troops,defending:Math.ceil(defense),surviving:survivors,disadvantage:Math.max(0,Math.ceil(defense)-troops+1)};
+  return {outcome:troops>Math.ceil(defense)?'win':'lose',attacking:troops,defending:Math.ceil(defense),surviving:survivors,disadvantage:Math.max(0,Math.ceil(defense)-troops+1)};
 }
 
 export function uprisingCommitment(reserves:number,commitment:Commitment|1):number {
@@ -43,6 +43,6 @@ export function uprisingForecast(state:GameState,id:FactionId,commitment:Commitm
     return {outcome:'invalid',attacking:troops,defending:home.troops,surviving:0,disadvantage:0};
   }
   const effective=home.troops*TERRAINS[home.terrain].defense/HOMELAND_UPRISING_BONUS;
-  return {outcome:troops>effective?'win':'lose',attacking:troops,defending:Math.ceil(effective),
+  return {outcome:troops>Math.ceil(effective)?'win':'lose',attacking:troops,defending:Math.ceil(effective),
     surviving:Math.max(0,troops-Math.ceil(effective)),disadvantage:Math.max(0,Math.floor(effective)-troops+1)};
 }
