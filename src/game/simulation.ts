@@ -60,6 +60,33 @@ export function sendSupport(state: GameState, from: number, to: number, fraction
   return true;
 }
 
+/**
+ * Grand strategy order: send a field army through owned supply territory to
+ * attack a reachable hostile frontline sector. Traversal is never teleportation.
+ * The player can command offensives from WORLD as well as MICRO.
+ */
+export function sendOffensive(state:GameState, from:number, to:number, fraction=0.65):boolean {
+  const source=state.territories[from], target=state.territories[to];
+  if(!source?.owner || !target || target.owner===source.owner || target.terrain==='sea')return false;
+  if(isNeighbour(state,from,to))return sendArmy(state,from,to,fraction);
+  let best:number[]|null=null;
+  for(const neighbour of target.neighbours) {
+    if(state.territories[neighbour].owner!==source.owner)continue;
+    const route=friendlyRoute(state,from,neighbour);
+    if(route && (!best||route.length<best.length))best=route;
+  }
+  if(!best)return false;
+  const troops=committedTroops(source.troops,fraction);
+  if(troops<2)return false;
+  source.troops-=troops;
+  const route=[...best,to];
+  state.marches.push({
+    id:state.nextMarchId++,from,to,owner:source.owner,troops,
+    duration:MARCH_SECONDS*(route.length-1),elapsed:0,route
+  });
+  return true;
+}
+
 export function resolveBattle(state: GameState, owner: FactionId, id: number, attackers: number, uprising = false): void {
   const target = state.territories[id];
   if (!target || target.terrain === 'sea' || attackers <= 0) return;
