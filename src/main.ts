@@ -107,6 +107,14 @@ canvas.addEventListener('pointerup',(event)=>{
   }
   if(!pointer||event.pointerId!==pointer.id)return;
   const {x,y}=coordinates(event),picked=renderer.pick(game,x,y);
+  // Macro mode is for overview. Tapping any region drills straight into the
+  // tactical camera and restores context-sensitive command controls.
+  if(activeView==='strategic'&&!pointer.moved&&picked!==null&&!supportMode){
+    selected=picked;viewPreference='tactical';activeView='tactical';
+    renderer.setView('tactical',game,picked);
+    hud.message('TACTICAL COMMAND / SECTOR '+String(picked+1).padStart(3,'0'));
+    resetPointer();return;
+  }
   if(!pointer.panning && pointer.moved && pointer.from!==null && game.territories[pointer.from].owner==='player' && picked!==null && picked!==pointer.from && isNeighbour(game,pointer.from,picked)) {
     if(sendArmy(game,pointer.from,picked,event.shiftKey ? .9 : commitment)){
       hud.message(game.territories[picked].owner==='player'?'Reinforcements dispatched.':'Attack launched!');
