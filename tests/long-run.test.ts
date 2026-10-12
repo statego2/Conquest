@@ -2,7 +2,7 @@ import { describe,expect,it } from 'vitest';
 import { updateAI } from '../src/game/ai';
 import { MANPOWER_RECOVERY } from '../src/game/config';
 import { createGame } from '../src/game/world';
-import { tick } from '../src/game/simulation';
+import { resolveBattle,tick } from '../src/game/simulation';
 import type { GameState } from '../src/game/types';
 
 function ledger(game:GameState){
@@ -53,4 +53,15 @@ describe('Long-lived AI world integrity',()=>{
     simulate(second,500);
     expect(first).toEqual(second);
   });
+  it('does not mint a free final survivor when winning by a fractional margin',()=>{
+    const game=createGame();
+    const target=game.territories[game.factions.amber.capital];
+    target.terrain='highland';
+    target.troops=1.4;
+    const before=ledger(game);
+    resolveBattle(game,'player',target.id,2);
+    expect(target.owner).toBe('amber');
+    expect(ledger(game)).toBeLessThanOrEqual(before);
+  });
+
 });
