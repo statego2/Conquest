@@ -1,0 +1,230 @@
+{
+  "version": "0.1.0",
+  "style": "Dark Strategist / Midnight War Room",
+  "license": "Project-owned original vector assets; see repository ownership",
+  "basePath": "/assets/conquest/",
+  "files": [
+    {
+      "path": "/assets/conquest/icons/crown.svg",
+      "group": "icons",
+      "name": "crown",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/swords.svg",
+      "group": "icons",
+      "name": "swords",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/banner.svg",
+      "group": "icons",
+      "name": "banner",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/fortress.svg",
+      "group": "icons",
+      "name": "fortress",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/uprising.svg",
+      "group": "icons",
+      "name": "uprising",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/supply.svg",
+      "group": "icons",
+      "name": "supply",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/spy.svg",
+      "group": "icons",
+      "name": "spy",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/occupation.svg",
+      "group": "icons",
+      "name": "occupation",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/skull.svg",
+      "group": "icons",
+      "name": "skull",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/capital.svg",
+      "group": "icons",
+      "name": "capital",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/retreat.svg",
+      "group": "icons",
+      "name": "retreat",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/icons/diplomacy.svg",
+      "group": "icons",
+      "name": "diplomacy",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/units/infantry.svg",
+      "group": "units",
+      "name": "infantry",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/units/cavalry.svg",
+      "group": "units",
+      "name": "cavalry",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/units/archer.svg",
+      "group": "units",
+      "name": "archer",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/units/garrison.svg",
+      "group": "units",
+      "name": "garrison",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/units/fleet.svg",
+      "group": "units",
+      "name": "fleet",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/structures/capital.svg",
+      "group": "structures",
+      "name": "capital",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/structures/citadel.svg",
+      "group": "structures",
+      "name": "citadel",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/structures/watchtower.svg",
+      "group": "structures",
+      "name": "watchtower",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/structures/barracks.svg",
+      "group": "structures",
+      "name": "barracks",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/structures/village.svg",
+      "group": "structures",
+      "name": "village",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/factions/ember.svg",
+      "group": "factions",
+      "name": "ember",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/factions/iron.svg",
+      "group": "factions",
+      "name": "iron",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/factions/azure.svg",
+      "group": "factions",
+      "name": "azure",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/factions/ivory.svg",
+      "group": "factions",
+      "name": "ivory",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/terrain/plains.svg",
+      "group": "terrain",
+      "name": "plains",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/terrain/forest.svg",
+      "group": "terrain",
+      "name": "forest",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/terrain/mountains.svg",
+      "group": "terrain",
+      "name": "mountains",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/terrain/marsh.svg",
+      "group": "terrain",
+      "name": "marsh",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/terrain/water.svg",
+      "group": "terrain",
+      "name": "water",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/ui/selection-ring.svg",
+      "group": "ui",
+      "name": "selection-ring",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/ui/contested-marker.svg",
+      "group": "ui",
+      "name": "contested-marker",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/ui/revolt-marker.svg",
+      "group": "ui",
+      "name": "revolt-marker",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/ui/occupied-marker.svg",
+      "group": "ui",
+      "name": "occupied-marker",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/ui/war-room-frame.svg",
+      "group": "ui",
+      "name": "war-room-frame",
+      "format": "svg"
+    },
+    {
+      "path": "/assets/conquest/backgrounds/war-room.svg",
+      "group": "backgrounds",
+      "name": "war-room",
+      "format": "svg"
+    }
+  ]
+}
