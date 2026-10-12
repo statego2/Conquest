@@ -534,8 +534,3 @@ export class WorldRenderer {
     if(t.capitalOf){c.fillStyle=t.capitalOf===t.owner?'#efddaf':'#ed8187';c.fillRect(p.x-2,p.y+17,4,4);}
   }
 }
-function blend(a:string,b:string,ratio:number):string{
-  const rgb=(hex:string)=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
-  const ca=rgb(a),cb=rgb(b);
-  return `rgb(${ca.map((n,i)=>Math.round(n*(1-ratio)+cb[i]*ratio)).join(',')})`;
-}
