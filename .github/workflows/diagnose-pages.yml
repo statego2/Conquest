@@ -43,3 +43,19 @@ jobs:
               -w 'HTTP:%{http_code} URL:%{url_effective}\n' "$url" || true
           done
 
+      - name: Verify deployed game rather than raw Vite source
+        run: |
+          for attempt in $(seq 1 16); do
+            curl -fsSL --connect-timeout 5 --max-time 15 \
+              "https://statego2.github.io/Conquest/?verify=${GITHUB_SHA}-${attempt}" \
+              -o /tmp/live-verified.html || true
+            if grep -q 'conquest-build' /tmp/live-verified.html 2>/dev/null && \
+               ! grep -q 'src="/src/main.ts"' /tmp/live-verified.html; then
+              echo 'PRODUCTION VERIFIED: GitHub URL serves compiled browser game'
+              exit 0
+            fi
+            echo "Still old page: attempt ${attempt}/16"
+            sleep 10
+          done
+          echo 'LIVE URL DOES NOT SERVE COMPILED GAME' >&2
+          exit 1
