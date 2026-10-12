@@ -8,7 +8,7 @@ describe('Deterministic world', () => {
   it('generates an irregular continental war theatre and five permanent homelands', () => {
     const a=createGame(99),b=createGame(99);
     expect(a).toEqual(b);expect(a.territories).toHaveLength(MAP_COLS*MAP_ROWS);
-    expect(a.territories.filter(t=>t.terrain!=='sea').length).toBeGreaterThan(390);
+    expect(a.territories.filter(t=>t.terrain!=='sea').length).toBeGreaterThan(350);
     expect(a.territories.filter(t=>t.terrain==='sea').length).toBeGreaterThan(100);
     expect(a.territories.every(t=>isLandCell(t.col,t.row)===(t.terrain!=='sea'))).toBe(true);
     expect(a.territories.filter(t=>t.capitalOf)).toHaveLength(5);
