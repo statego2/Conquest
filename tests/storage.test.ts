@@ -1,7 +1,7 @@
 import { afterEach,describe,expect,it,vi } from 'vitest';
 import { createGame, territoryId } from '../src/game/world';
 import { clearGame,loadGame,saveGame } from '../src/game/storage';
-import { sendArmy,sendSupport } from '../src/game/simulation';
+import { sendSupport } from '../src/game/simulation';
 import { MANPOWER_CAP } from '../src/game/config';
 
 function memoryStorage(){
