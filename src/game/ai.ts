@@ -1,7 +1,7 @@
 import { RESERVE_CAP, TERRAINS } from './config';
 import { friendlyRoute, launchRevolt, mobilizeReserves, sendArmy, sendSupport } from './simulation';
 import { uprisingForecast } from './tactics';
-import type { FactionId, GameState, Territory } from './types';
+import type { FactionId, GameState } from './types';
 
 const AI_IDS: FactionId[] = ['amber', 'coral', 'violet', 'moss'];
 
