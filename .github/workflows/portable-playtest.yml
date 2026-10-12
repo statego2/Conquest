@@ -1,0 +1,34 @@
+name: Build portable playtest
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: node --test scripts/build-portable.test.mjs
+      - run: npm run check
+        env:
+          GITHUB_PAGES: 'true'
+      - name: Package independent single-file browser playtest
+        run: node scripts/build-portable.mjs dist dist/Conquest-Portable.html
+      - name: Verify self-contained browser entrypoint
+        run: |
+          test -s dist/Conquest-Portable.html
+          ! grep -E '(src|href)="/Conquest/assets/' dist/Conquest-Portable.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Conquest-Portable-Playtest
+          path: dist/Conquest-Portable.html
+          if-no-files-found: error
+          retention-days: 30
