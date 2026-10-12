@@ -17,7 +17,8 @@ describe('Deterministic world', () => {
     const world=createGame();
     for(const t of world.territories){
       expect(hexNeighbours(t.col,t.row)).toEqual(t.neighbours);
-      expect(t.neighbours.length).toBeGreaterThan(1);
+      if(t.terrain==='sea')expect(t.neighbours).toHaveLength(0);
+      else expect(t.neighbours.length).toBeGreaterThan(1);
       for(const n of t.neighbours)expect(world.territories[n].neighbours).toContain(t.id);
     }
   });
