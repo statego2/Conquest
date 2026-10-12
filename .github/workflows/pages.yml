@@ -8,13 +8,99 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: pages
+  group: conquest-pages
   cancel-in-progress: true
 jobs:
-  deploy:
+  mode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      build_type: ${{ steps.detect.outputs.build_type }}
+    steps:
+      - id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MODE="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .build_type)"
+          echo "build_type=${MODE}" >> "${GITHUB_OUTPUT}"
+          echo "Existing Pages mode: ${MODE}"
+          if [[ "${MODE}" != "legacy" && "${MODE}" != "workflow" ]]; then exit 1; fi
+
+  legacy:
+    needs: mode
+    if: needs.mode.outputs.build_type == 'legacy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    # IMPORTANT: no github-pages environment! Legacy branch publishing must
+    # not be blocked by approval/protection rules for Actions deployments.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Build and test source code
+        run: npm run check
+        env:
+          GITHUB_PAGES: 'true'
+      - name: Inline compiled JS/CSS into the actual Pages entry
+        run: node scripts/build-portable.mjs dist dist/Conquest-Portable.html
+      - name: Replace public root with playable HTML
+        run: |
+          cp dist/Conquest-Portable.html index.html
+          grep -q 'conquest-build' index.html
+          if grep -q 'src="/src/main.ts"' index.html; then
+            echo 'Error: public entry still links raw TypeScript' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'Production HTML already up-to-date'
+          else
+            git commit -m 'Publish compiled Conquest game [skip ci]'
+            git push origin HEAD:main
+          fi
+      - name: Request a fresh legacy Pages build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"; then
+              echo 'Requested GitHub Pages branch rebuild'
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Unable to schedule legacy Pages rebuild' >&2
+          exit 1
+      - name: Confirm real public URL serves compiled game
+        run: |
+          for attempt in $(seq 1 25); do
+            curl -sSL --connect-timeout 5 --max-time 15 \
+              -H 'Cache-Control: no-cache' \
+              "https://statego2.github.io/Conquest/?deployment=${GITHUB_SHA}-${attempt}" \
+              -o /tmp/conquest-live.html || true
+            if grep -q 'conquest-build' /tmp/conquest-live.html 2>/dev/null; then
+              if grep -q 'src="/src/main.ts"' /tmp/conquest-live.html; then
+                echo 'Unexpected raw source entry'; exit 1
+              fi
+              echo 'SUCCESS: public link now delivers playable compiled game'
+              exit 0
+            fi
+            echo "Waiting for Pages to publish... ${attempt}/25"
+            sleep 10
+          done
+          echo 'ERROR: public Pages still serves stale source HTML' >&2
+          exit 1
+
+  workflow:
+    needs: mode
+    if: needs.mode.outputs.build_type == 'workflow'
     environment:
       name: github-pages
-      url: https://statego2.github.io/Conquest/
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -23,72 +109,12 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
-      - name: Build the verified production game
-        run: npm run check
+      - run: npm run check
         env:
           GITHUB_PAGES: 'true'
-      - name: Assemble single-file browser game
-        run: node scripts/build-portable.mjs dist dist/Conquest-Portable.html
-      - name: Detect actual GitHub Pages publication mode
-        id: hosting
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          MODE="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .build_type)"
-          echo "mode=${MODE}" >> "${GITHUB_OUTPUT}"
-          echo "GitHub Pages hosting mode: ${MODE}"
-          if [[ "${MODE}" != "legacy" && "${MODE}" != "workflow" ]]; then
-            echo "Unsupported Pages build mode: ${MODE}" >&2
-            exit 1
-          fi
-      - name: Publish compiled game into main root for legacy Pages
-        if: steps.hosting.outputs.mode == 'legacy'
-        run: |
-          cp dist/Conquest-Portable.html index.html
-          if grep -q 'src="/src/main.ts"' index.html; then
-            echo "ERROR: source TypeScript entry remains in public artifact" >&2
-            exit 1
-          fi
-          grep -q 'conquest-build' index.html
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          if git diff --cached --quiet; then
-            echo "Compiled website entry already current"
-          else
-            git commit -m 'Deploy compiled Conquest game to Pages root [skip ci]'
-            git push origin HEAD:main
-          fi
-      - name: Force branch-based Pages to rebuild new compiled entry
-        if: steps.hosting.outputs.mode == 'legacy'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
-      - name: Configure GitHub Actions Pages deployment
-        if: steps.hosting.outputs.mode == 'workflow'
-        uses: actions/configure-pages@v5
-      - name: Upload GitHub Actions Pages site
-        if: steps.hosting.outputs.mode == 'workflow'
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-      - name: Deploy GitHub Actions Pages site
-        if: steps.hosting.outputs.mode == 'workflow'
+      - id: deployment
         uses: actions/deploy-pages@v4
-      - name: Probe real URL after deployment
-        run: |
-          for attempt in $(seq 1 15); do
-            curl --connect-timeout 5 --max-time 15 -sSL \
-              -H 'Cache-Control: no-cache' \
-              "https://statego2.github.io/Conquest/?check=${GITHUB_SHA}-${attempt}" \
-              -o /tmp/actual-conquest.html || true
-            if grep -q 'conquest-build' /tmp/actual-conquest.html 2>/dev/null; then
-              echo "VERIFIED: public URL serves compiled Conquest HTML"
-              exit 0
-            fi
-            echo "Public URL not refreshed (attempt ${attempt}); retrying"
-            sleep 10
-          done
-          echo "Public URL still does not serve compiled game" >&2
-          exit 1
