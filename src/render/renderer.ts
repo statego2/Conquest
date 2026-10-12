@@ -56,6 +56,7 @@ export class WorldRenderer {
   private scale = 1;
   private bursts: Burst[] = [];
   public hover: number | null = null;
+  private armyMarkers:{x:number;y:number;id:number}[]=[];
   public viewMode: ViewMode = 'tactical';
   private viewFocus: {x:number;y:number}={x:265,y:230};
   constructor(private readonly canvas: HTMLCanvasElement) {
@@ -111,10 +112,26 @@ export class WorldRenderer {
     else this.offsetY = Math.max(this.height - WORLD_HEIGHT * this.scale - margin, Math.min(margin, this.offsetY));
   }
   pick(state: GameState, screenX: number, screenY: number): number | null {
+    if(this.viewMode==='strategic') {
+      const marker=this.armyMarkers.find(m=>Math.hypot(m.x-screenX,m.y-screenY)<18);
+      if(marker)return marker.id;
+    }
     const x = (screenX - this.offsetX) / this.scale;
     const y = (screenY - this.offsetY) / this.scale;
     for (const t of state.territories) {
-      if (pointInPolygon(provinceOutline(t),x,y))return t.id;
+      if (t.terrain!=='sea'&&pointInPolygon(provinceOutline(t),x,y))return t.id;
+    }
+    // Tiny strategic cells are difficult to hit on a phone; allow a small
+    // screen-space hit radius without turning distant sea into clickable land.
+    if(this.viewMode==='strategic') {
+      let id:null|number=null,near=22;
+      for(const t of state.territories){
+        if(t.terrain==='sea')continue;
+        const p=hexCenter(t);
+        const distance=Math.hypot(p.x*this.scale+this.offsetX-screenX,p.y*this.scale+this.offsetY-screenY);
+        if(distance<near){near=distance;id=t.id;}
+      }
+      return id;
     }
     return null;
   }
@@ -133,7 +150,7 @@ export class WorldRenderer {
     c.clearRect(0,0,this.width,this.height);
     this.drawBackdrop(c);
     c.setTransform(this.dpr*this.scale,0,0,this.dpr*this.scale,this.offsetX*this.dpr,this.offsetY*this.dpr);
-    c.strokeStyle = 'rgba(140,156,154,0.025)'; c.lineWidth=.6;
+    c.strokeStyle = 'rgba(140,156,154,0.017)'; c.lineWidth=.6;
     for(let x=0;x<WORLD_WIDTH;x+=84){c.beginPath();c.moveTo(x,0);c.lineTo(x,WORLD_HEIGHT);c.stroke();}
     for(let y=0;y<WORLD_HEIGHT;y+=84){c.beginPath();c.moveTo(0,y);c.lineTo(WORLD_WIDTH,y);c.stroke();}
     const targets = selected === null ? [] : [...state.territories[selected].neighbours];
@@ -152,6 +169,7 @@ export class WorldRenderer {
       targets.splice(0,targets.length,...queue.slice(1));
     }
     for(const t of state.territories){
+      if(t.terrain==='sea')continue;
       const p=hexCenter(t),sx=p.x*this.scale+this.offsetX,sy=p.y*this.scale+this.offsetY;
       const margin=HEX_RADIUS*this.scale+28;
       if(sx< -margin || sx>this.width+margin || sy< -margin || sy>this.height+margin)continue;
@@ -161,6 +179,7 @@ export class WorldRenderer {
     // Macro focus: continuous geopolitical borders and frontier concentrations.
     if (macro || operational) this.drawPoliticalBorders(state,macro);
     if (macro) this.drawStrategicLabels(state);
+    if (macro) this.drawWorldArmyMarkers(state, selected);
     for(const m of state.marches){
       const route = m.route?.length && m.route[0]===m.from && m.route[m.route.length-1]===m.to
         ? m.route : [m.from,m.to];
@@ -207,20 +226,71 @@ export class WorldRenderer {
     }
     c.restore();
   }
+  /**
+   * Legible, aggregated army formations in WORLD mode. Troops stay on the map,
+   * and markers are selectable touch targets for actual strategic orders.
+   */
+  private drawWorldArmyMarkers(state:GameState,selected:number|null):void{
+    const clusters=new Map<string,{troops:number;army:Territory;x:number;y:number;size:number;front:boolean}>();
+    for(const t of state.territories) {
+      if(t.terrain==='sea'||!t.owner)continue;
+      const key=t.owner+':'+Math.floor(t.col/5)+':'+Math.floor(t.row/4);
+      const point=hexCenter(t),front=t.neighbours.some(id=>state.territories[id].owner!==t.owner);
+      const item=clusters.get(key);
+      if(!item){
+        clusters.set(key,{troops:t.troops,army:t,x:point.x,y:point.y,size:1,front});
+      }else{
+        item.troops+=t.troops;item.x+=point.x;item.y+=point.y;item.size++;
+        if(t.troops>item.army.troops || (front&&!item.front))item.army=t;
+        item.front ||= front;
+      }
+    }
+    const candidates=[...clusters.values()].filter(a=>a.troops>=12)
+      .sort((a,b)=>Number(b.army.id===selected)-Number(a.army.id===selected) ||
+        Number(b.front)-Number(a.front) || b.troops-a.troops)
+      .slice(0,33);
+    const c=this.ctx;
+    c.save();c.setTransform(this.dpr,0,0,this.dpr,0,0);
+    this.armyMarkers=[];
+    const occupied:{x:number;y:number}[]=[];
+    for(const m of candidates) {
+      const x=m.x/m.size*this.scale+this.offsetX;
+      const y=m.y/m.size*this.scale+this.offsetY;
+      if(x<12||x>this.width-12||y<27||y>this.height-24)continue;
+      if(occupied.some(p=>Math.hypot(p.x-x,p.y-y)<29))continue;
+      occupied.push({x,y});
+      const color=FACTIONS[m.army.owner!].color;
+      const special=m.army.id===selected;
+      c.fillStyle='#07161ce9';c.strokeStyle=special?'#f3dba7':color;c.lineWidth=special?2.2:1.2;
+      c.beginPath();c.roundRect(x-24,y-10,48,20,4);c.fill();c.stroke();
+      c.fillStyle=color;c.beginPath();c.moveTo(x-19,y);c.lineTo(x-13,y-5);c.lineTo(x-7,y);c.lineTo(x-13,y+5);c.closePath();c.fill();
+      c.textAlign='center';c.textBaseline='middle';c.fillStyle='#f6f0df';
+      c.font='bold 11px system-ui';
+      c.fillText(m.troops>=1000?Math.floor(m.troops/100)/10+'k':String(Math.floor(m.troops)),x+7,y);
+      this.armyMarkers.push({x,y,id:m.army.id});
+    }
+    if(selected!==null && state.territories[selected].terrain!=='sea'){
+      const t=state.territories[selected],p=hexCenter(t),x=p.x*this.scale+this.offsetX,y=p.y*this.scale+this.offsetY;
+      c.strokeStyle='#fae8b8';c.lineWidth=2.4;c.beginPath();c.arc(x,y,16,0,7);c.stroke();
+      c.fillStyle='#fff4d5';c.font='800 12px system-ui';c.textAlign='center';
+      c.fillText(Math.floor(t.troops).toString(),x,y-20);
+    }
+    c.restore();
+  }
   private drawStrategicLabels(state: GameState): void {
     const c=this.ctx;
     for(const faction of Object.values(state.factions)) {
       const owned=state.territories.filter(t=>t.owner===faction.id);
-      if(!owned.length)continue;
+      if(owned.length<3)continue;
       const cx=owned.reduce((sum,t)=>sum+hexCenter(t).x,0)/owned.length;
       const cy=owned.reduce((sum,t)=>sum+hexCenter(t).y,0)/owned.length;
       c.save();c.textAlign='center';c.textBaseline='middle';
       c.shadowColor='#071014';c.shadowBlur=13;
       c.fillStyle='#f1efe2';c.font='800 '+Math.max(25,14/this.scale)+'px Barlow Condensed,system-ui';
-      c.fillText(faction.name, cx, cy-16, 260);
+      c.fillText(faction.name, cx, cy-30, 230);
       c.font='700 '+Math.max(19,11/this.scale)+'px Barlow Condensed,system-ui';
       c.fillStyle=FACTIONS[faction.id].color;
-      c.fillText(owned.length+' REGIONS',cx,cy+12,220);
+      c.fillText(owned.length+' TERRITORIES',cx,cy-7,220);
       c.restore();
     }
   }
@@ -319,11 +389,14 @@ export class WorldRenderer {
     const c=this.ctx,p=hexCenter(t);
     tracePolygon(c,provinceOutline(t));
     const color=t.owner?FACTIONS[t.owner].color:'#53686b';
-    c.fillStyle=t.owner?blend('#152532',color, macro ? 0.8 : operational ? 0.65 : t.capitalOf === t.owner ? 0.54 : 0.4):'#1b2a2b';
+    c.fillStyle=t.owner
+      ? blend(t.terrain==='fertile'?'#25372f':'#1a302e',color,macro?.66:operational?.58:.38)
+      : t.terrain==='fertile'?'#334537':t.terrain==='highland'?'#414946':'#293a35';
     if(selected||hovered){c.shadowColor=selected?'#65ecdf':color;c.shadowBlur=7;}
     c.fill();c.shadowBlur=0;
     if(!macro&&!operational)this.drawTacticalSurface(t,p);
-    c.strokeStyle=selected?'#fff2cd':hovered?'#ffffff':inReach?'#d1c299b0':frontier?color+'91':macro?'#00000000':'#ffffff10';
+    c.strokeStyle=selected?'#fff2cd':hovered?'#ffffff':inReach?'#d1c299b0':
+      frontier?color+'b9':macro?'#00000000':'#ffffff17';
     c.lineWidth=selected?2.8:inReach?1.5:frontier?1.4:.8;c.stroke();
     if(t.terrain==='highland'){c.strokeStyle='#8aa2b177';c.lineWidth=1;
       c.beginPath();c.moveTo(p.x-17,p.y-15);c.lineTo(p.x-10,p.y-23);c.lineTo(p.x-3,p.y-15);c.stroke();}
