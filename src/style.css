@@ -135,3 +135,13 @@ button:not(:disabled):active{transform:translateY(1px)}
   .map-hint,.map-hint.is-strategic{bottom:64px}
   .stage-head{opacity:.6;font-size:8px}
 }
+
+/* On the strategic overview the selected army must remain visible by name and troop count. */
+.command-deck.is-strategic .module-eyebrow{display:none}
+.command-deck.is-strategic .sector-heading{margin:0 0 2px}
+.command-deck.is-strategic .sector-stats{display:inline-flex;margin:0 0 0 10px;gap:10px}
+.command-deck.is-strategic .sector-owner{display:inline-block;margin:0}
+.command-deck.is-strategic .forecast{display:none}
+@media(max-height:475px) and (orientation:landscape){
+  .command-deck.is-strategic .selected-module{display:flex;flex-direction:column;justify-content:center}
+}
