@@ -150,6 +150,7 @@ window.addEventListener('keydown',(event)=>{
   }
 });
 let lastFrame=performance.now(),lastUI=0,lastSave=0;
+let hadGlobalDominion=game.territories.every(t=>t.owner==='player');
 function frame(now:number):void{
   const dt=Math.min(.08,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
   tick(game,dt);
@@ -159,6 +160,9 @@ function frame(now:number):void{
     if(game.events.some(e=>e.owner==='player'&&e.type==='capture'))hud.message('SECTOR CAPTURED. KEEP ADVANCING.');
     else if(game.events.some(e=>e.type==='revolt'))hud.message('A NATION HAS RISEN AGAIN.');
   }
+  const dominant=game.territories.every(t=>t.owner==='player');
+  if(dominant && !hadGlobalDominion)hud.message('WORLD DOMINION. THE WAR NEVER ENDS.');
+  hadGlobalDominion=dominant;
   syncView();
   renderer.render(game,selected,dt,supportMode);
   if(now-lastUI>170){hud.render(game,selected,supportMode,viewPreference,activeView,commitment,renderer.hover);lastUI=now;}
