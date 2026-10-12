@@ -23,6 +23,11 @@ test('the actual public GitHub Pages URL runs a playable canvas and controls',as
   await expect(page.locator('#commitment')).toBeVisible();
   await expect(page.locator('#selected-info')).toContainText('GARRISON');
   await page.screenshot({path:testInfo.outputPath('live-world.png')});
+  // Release-gate a real command on the PUBLIC website, not merely a local build.
+  await page.locator('#world').click({position:{x:235,y:155}});
+  await expect(page.locator('#toast')).toContainText('OFFENSIVE DISPATCHED');
+  await expect(page.locator('#view-label')).toContainText('WORLD COMMAND');
+  await page.screenshot({path:testInfo.outputPath('live-world-after-order.png')});
   await page.locator('#view-tactical').click();
   await expect(page.locator('#view-label')).toContainText('TACTICAL');
   await page.locator('#commitment').click();
