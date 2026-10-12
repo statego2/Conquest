@@ -6,7 +6,7 @@ test('the actual public GitHub Pages URL runs a playable canvas and controls',as
   const response=await page.goto('https://statego2.github.io/Conquest/',{waitUntil:'domcontentloaded'});
   expect(response?.status()).toBe(200);
   await expect(page.locator('#world')).toBeVisible({timeout:15000});
-  await expect(page.locator('#land')).toContainText('/');
+  await expect(page.locator('#land')).toContainText('/377');
   await expect(page.locator('#view-label')).toContainText('TACTICAL');
   const details=await page.locator('#world').evaluate(canvas=>{
     const context=canvas.getContext('2d');
@@ -20,6 +20,8 @@ test('the actual public GitHub Pages URL runs a playable canvas and controls',as
   await page.locator('#view-strategic').click();
   await expect(page.locator('#view-label')).toContainText('WORLD COMMAND');
   await expect(page.locator('#command-deck')).toHaveClass(/is-strategic/);
+  await expect(page.locator('#commitment')).toBeVisible();
+  await expect(page.locator('#selected-info')).toContainText('GARRISON');
   await page.screenshot({path:testInfo.outputPath('live-world.png')});
   await page.locator('#view-tactical').click();
   await expect(page.locator('#view-label')).toContainText('TACTICAL');
