@@ -1,5 +1,7 @@
 # Conquest — Dark Strategist
 
+**IMPORTANT · vNext design direction locked 2026-10-13:** The next product is **Micro-first**, with a polished 10–12-location living tactical theatre, minimal source→target controls and **real nested sovereignty** across settlements → regions → countries. The current 377-sector game is a **legacy engineering/gameplay alpha**, not a completed implementation of that new direction. Read [the official direction lock](docs/redesign/00_DIRECTION_LOCK.md), [gameplay contract](docs/redesign/01_GAMEPLAY_CONTRACT.md), [art & UX target](docs/redesign/02_ART_AND_UX.md) and [implementation roadmap](docs/redesign/03_EXECUTION_AND_ACCEPTANCE.md) before changing game systems. See also [AI developer instructions](AGENTS.md).
+
 **Reign. Fall. Rise again.** A living-world, real-time territorial strategy game with persistent national resistance.
 
 **Status:** Alpha 0.6 candidate · browser-only, single-player. Steam, accounts, multiplayer and real online leaderboards are future milestones — not live features.
