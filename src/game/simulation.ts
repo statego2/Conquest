@@ -13,7 +13,7 @@ export function isNeighbour(state: GameState, from: number, to: number): boolean
 export function sendArmy(state: GameState, from: number, to: number, fraction = 0.65): boolean {
   const source = state.territories[from];
   const target = state.territories[to];
-  if (!source || !target || !source.owner || !isNeighbour(state, from, to)) return false;
+  if (!source || !target || !source.owner || target.terrain === 'sea' || !isNeighbour(state, from, to)) return false;
   const troops = committedTroops(source.troops,fraction);
   if (troops < 2) return false;
   source.troops -= troops;
@@ -62,7 +62,7 @@ export function sendSupport(state: GameState, from: number, to: number, fraction
 
 export function resolveBattle(state: GameState, owner: FactionId, id: number, attackers: number, uprising = false): void {
   const target = state.territories[id];
-  if (!target || attackers <= 0) return;
+  if (!target || target.terrain === 'sea' || attackers <= 0) return;
   if (target.owner === owner) {
     // The cap limits local recruitment, not the size of an arriving field army.
     target.troops += attackers;
@@ -125,7 +125,7 @@ export function tick(state: GameState, dt: number): void {
   state.events.length = 0;
 
   for (const province of state.territories) {
-    if (!province.owner) continue;
+    if (!province.owner || province.terrain === 'sea') continue;
     const rate = TERRAINS[province.terrain].production;
     const homelandBoost = province.capitalOf === province.owner ? 0.45 : 0;
     // Population recovers slowly; recruitment actually transfers population into military.
