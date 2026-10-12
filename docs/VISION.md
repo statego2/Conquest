@@ -1,5 +1,7 @@
 # Vision & philosophical foundation
 
+> **CURRENT PRODUCT VISION UPDATE (2026-10-13):** This is a historical design foundation, NOT the binding specification for new development. The user locked the new Micro-first direction in [docs/redesign/00_DIRECTION_LOCK.md](redesign/00_DIRECTION_LOCK.md), with [three-level independent sovereignty](redesign/01_GAMEPLAY_CONTRACT.md) and [premium dark tactical map-first UI](redesign/02_ART_AND_UX.md). Preserve all existing nonconflicting endless-world and fair-recovery principles.
+
 ## Core proposition
 
 > Power is temporary. Identity and the will to reclaim home can outlive conquest.
