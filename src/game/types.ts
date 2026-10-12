@@ -8,6 +8,8 @@ export interface Territory {
   terrain: Terrain;
   owner: FactionId | null;
   troops: number;
+  /** Local finite recruitment pool shared by military production and homeland resistance. */
+  manpower: number;
   capitalOf: FactionId | null;
   neighbours: number[];
   // Recent conquest unrest; visual signal and future space for deeper insurgency.
@@ -33,6 +35,8 @@ export interface March {
   troops: number;
   duration: number;
   elapsed: number;
+  /** Path used by long-range friendly support. Old saves have no route. */
+  route?: number[];
 }
 
 export interface GameEvent {
