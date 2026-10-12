@@ -1,7 +1,7 @@
 import { describe,expect,it } from 'vitest';
 import { createGame } from '../src/game/world';
 import { battleForecast, committedTroops,nextCommitment,uprisingCommitment,uprisingForecast } from '../src/game/tactics';
-import { launchRevolt,resolveBattle,sendArmy,tick } from '../src/game/simulation';
+import { launchRevolt,sendArmy,tick } from '../src/game/simulation';
 
 describe('Visible force commitments and combat forecast',()=>{
   it('cycles three orders with no hidden send amount',()=>{
