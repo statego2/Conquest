@@ -72,7 +72,8 @@ export function resolveBattle(state: GameState, owner: FactionId, id: number, at
   const defense = TERRAINS[target.terrain].defense;
   const assault = uprising && target.capitalOf === owner ? HOMELAND_UPRISING_BONUS : 1;
   // Homeland uprisings have local advantage; normal invaders use the same defense rules.
-  if (attackers * assault > target.troops * defense) {
+  // Capture requires at least one whole surviving attacker after integer attrition.
+  if (attackers > Math.ceil(target.troops * defense / assault)) {
     const previousOwner = target.owner;
     const losses = Math.ceil(target.troops * defense / assault);
     target.troops = Math.max(1, attackers - losses);
