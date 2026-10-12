@@ -119,3 +119,19 @@ button:not(:disabled):active{transform:translateY(1px)}
   .command-deck.is-strategic .command-actions button{min-width:74px;padding:4px 6px;font-size:9px}
   .map-hint.is-strategic{bottom:78px;font-size:8px}
 }
+
+/* Battlefield should dominate the phone: compact military radio console. */
+@media(max-height:475px) and (orientation:landscape){
+  .command-deck,.command-deck.is-strategic{height:53px;min-height:53px;max-height:53px;overflow:hidden}
+  .command-deck .selected-module,.command-deck.is-strategic .selected-module{padding:4px 8px;overflow:hidden}
+  .command-deck .module-eyebrow{font-size:7px;line-height:1}
+  .command-deck .sector-heading{margin:1px 0}
+  .command-deck .sector-heading strong{font-size:14px}
+  .command-deck .sector-owner,.command-deck .sector-stats{font-size:8px}
+  .command-deck .sector-stats{margin-top:1px}
+  .command-deck .forecast{font-size:8px;margin-top:1px;line-height:1.1}
+  .command-deck .command-actions{max-height:53px}
+  .command-deck .command-actions button,.command-deck.is-strategic .command-actions button{min-width:76px;padding:3px 5px;font-size:10px}
+  .map-hint,.map-hint.is-strategic{bottom:64px}
+  .stage-head{opacity:.6;font-size:8px}
+}
