@@ -1,0 +1,33 @@
+name: Mobile browser smoke
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'e2e/**'
+      - '.github/workflows/browser-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phone-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm install --no-save --no-audit --no-fund @playwright/test@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config=e2e/playwright.config.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conquest-mobile-playtest-shots
+          path: |
+            test-results/
+            playwright-report/
+            e2e/test-results/
+            e2e-report/
+          retention-days: 14
