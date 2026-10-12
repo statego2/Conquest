@@ -119,7 +119,7 @@ export class WorldRenderer {
     c.strokeStyle = 'rgba(140,156,154,0.025)'; c.lineWidth=.6;
     for(let x=0;x<WORLD_WIDTH;x+=84){c.beginPath();c.moveTo(x,0);c.lineTo(x,WORLD_HEIGHT);c.stroke();}
     for(let y=0;y<WORLD_HEIGHT;y+=84){c.beginPath();c.moveTo(0,y);c.lineTo(WORLD_WIDTH,y);c.stroke();}
-    const targets = selected === null ? [] : state.territories[selected].neighbours;
+    const targets = selected === null ? [] : [...state.territories[selected].neighbours];
     // Mark every reachable allied province when a reinforcement order is being issued.
     if (supportMode && selected !== null && state.territories[selected].owner === 'player') {
       const visited = new Set<number>([selected]);
