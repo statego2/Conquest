@@ -24,7 +24,14 @@ export function isLandCell(col:number,row:number):boolean {
   const bottom=16.95-1.15*Math.sin(col*.23+.9)-.65*Math.sin(col*.54);
   const west=1.5+1.2*Math.sin(row*.43+.7);
   const east=30.7-1.15*Math.sin(row*.48+.2);
-  return row>=top && row<=bottom && col>=west && col<=east;
+  if(!(row>=top && row<=bottom && col>=west && col<=east))return false;
+  // Navigable bays, fjords and peninsulas. The historical save-migration
+  // corridor [6..26] × [6..12] remains land so no veteran conquests are lost.
+  if(col>=6 && col<=10 && row<4.7-.24*Math.abs(col-8))return false;
+  if(col>=22 && col<=26 && row<5.7-.25*Math.abs(col-24))return false;
+  if(col>=8 && col<=13 && row>13.4+.38*Math.abs(col-10))return false;
+  if(col>=21 && col<=26 && row>14.2+.25*Math.abs(col-24))return false;
+  return true;
 }
 
 export function territoryId(col: number, row: number): number {
