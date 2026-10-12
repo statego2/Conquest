@@ -2,7 +2,7 @@
 
 **Reign. Fall. Rise again.** A living-world, real-time territorial strategy game with persistent national resistance.
 
-**Status:** Alpha 0.3 candidate · browser-only, single-player. Steam, accounts, multiplayer and real online leaderboards are future milestones — not live features.
+**Status:** Alpha 0.6 candidate · browser-only, single-player. Steam, accounts, multiplayer and real online leaderboards are future milestones — not live features.
 
 ## Quick start
 
@@ -67,3 +67,13 @@ The official browser entrypoint is [Conquest — Dark Strategist](https://stateg
 ## Alpha 0.3 change control
 
 The rules for finite manpower, long-range friendly convoys, uprising effectiveness and AI reinforcement are experimental balance defaults, not proven final tuning. Previously saved Alpha 0.2 worlds are migrated to include manpower without resetting control, capitals or marching armies. The save key is retained; no automatic new world is created. Strategic supply corridors are validated when orders are issued and when the convoy completes movement. Unit tests in `tests/logistics.test.ts` cover core regression cases.
+
+## Alpha 0.4–0.6: Command-scale and offensive staging
+
+- Camera levels: MICRO, REGIONS, WORLD, or AUTO based on the current number of controlled regions. Keyboard keys 1–3 select fixed zoom levels. Pinch/zoom is supported on touch.
+- SEND 35% / 65% / 90% changes the fraction deployed on attacks, support convoys, and uprisings (with a minimum rebellion size).
+- The command panel previews approximate current battle odds for a neighbouring enemy, before travel. Enemy reinforcements may still change the actual result.
+- MAX_TROOPS is a **local production limit, not an army size limit**. Moving troops into a staging area can create a large field army and eventually assault defensive citadels.
+- AI attempts to build staging armies along supply corridors rather than repeatedly attacking an unwinnable stronghold. AI factions wait for stronger rebellion opportunities instead of launching the moment the minimum reserve exists.
+
+These are gameplay hypotheses until tested on the phone by a person, with actual fun and frustration observations.
