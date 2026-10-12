@@ -2,9 +2,10 @@ import { FACTIONS, REVOLT_MIN_RESERVES, TERRAINS } from '../game/config';
 import { formatClock, leaderboard } from '../game/metrics';
 import { canRevolt, ownedTerritories } from '../game/simulation';
 import type { GameState } from '../game/types';
+import type { ViewMode, ViewPreference } from '../game/view';
 
 export interface HudActions {
-  onRevolt():void; onMobilize():void; onSupport():void; onPause():void; onSpeed():void;
+  onRevolt():void; onMobilize():void; onSupport():void; onView(mode:ViewPreference):void; onPause():void; onSpeed():void;
   onResetView():void; onNewGame():void; onSound():void; onZoom(factor:number):void;
 }
 export class HUD {
@@ -22,14 +23,23 @@ export class HUD {
   private readonly speed:HTMLButtonElement;
   private readonly sound:HTMLButtonElement;
   private readonly toast:HTMLElement;
+  private readonly viewLabel:HTMLElement;
+  private readonly viewButtons:HTMLButtonElement[];
   private toastTimeout=0;
 
   constructor(root:HTMLElement,actions:HudActions){
-    root.innerHTML="<div class=\"app-frame\">\n <header class=\"status-rail\">\n  <div class=\"identity\"><div class=\"identity-mark\">C<span>╱</span></div><div class=\"identity-name\"><strong>CONQUEST</strong><small>DARK STRATEGIST</small></div></div>\n  <div class=\"overview\">\n    <div class=\"overview-cell\"><span>TERRITORY</span><strong id=\"land\">0</strong></div>\n    <div class=\"overview-cell\"><span>ARMY</span><strong id=\"army\">0</strong></div>\n    <div class=\"overview-cell\"><span>RESERVES</span><strong id=\"reserves\">0</strong></div>\n    <div class=\"overview-cell overview-clock\"><span>WAR TIME</span><strong id=\"clock\">00:00</strong></div>\n  </div>\n  <div class=\"rail-actions\"><button id=\"pause\" title=\"Pause simulation\">PAUSE</button><button id=\"speed\" title=\"Simulation speed\">1×</button><button id=\"sound\" title=\"Toggle audio\">SOUND OFF</button></div>\n </header>\n <main class=\"war-stage\">\n  <div class=\"map-shell\"><canvas id=\"world\" aria-label=\"Interactive conquest map. Select your territory, then tap an adjacent province to attack.\"></canvas></div>\n  <div class=\"stage-head\"><span class=\"live-dot\"></span><span class=\"theatre-title\">WESTERN FRONT / OPERATION ATLAS</span><span class=\"stage-status\" id=\"status\">ESTABLISHING LINK</span></div>\n  <div class=\"map-tools\"><button id=\"zoom-in\" aria-label=\"Zoom in\">+</button><button id=\"zoom-out\" aria-label=\"Zoom out\">−</button><button id=\"reset-view\" aria-label=\"Reset camera\">◎</button></div>\n  <div class=\"rankings\"><div class=\"rankings-title\">THE POWER BALANCE <span>LIVE · LOCAL</span></div><div id=\"ranks\"></div></div>\n  <div class=\"map-hint\">TAP A CYAN TERRITORY → TAP A NEIGHBOUR TO ATTACK <span> · DRAG EMPTY LAND TO SCROLL</span></div>\n  <div class=\"command-deck\">\n    <div class=\"selected-module\"><span class=\"module-eyebrow\">FIELD COMMAND</span><div id=\"selected-info\">Choose a territory to command your forces.</div></div>\n    <div class=\"command-actions\"><button id=\"support\" class=\"support-action\">SEND SUPPORT</button><button id=\"mobilize\" class=\"deploy-action\">+ DEPLOY RESERVES</button><button id=\"revolt\" class=\"revolt-action\">RAISE UPRISING</button></div>\n    <button id=\"new-game\" class=\"new-game\" title=\"Restart with a new world\">↻ NEW WORLD</button>\n  </div>\n </main>\n <div class=\"toast\" id=\"toast\" role=\"status\" aria-live=\"polite\"></div>\n</div>";
+    root.innerHTML="<div class=\"app-frame\">\n <header class=\"status-rail\">\n  <div class=\"identity\"><div class=\"identity-mark\">C<span>╱</span></div><div class=\"identity-name\"><strong>CONQUEST</strong><small>DARK STRATEGIST</small></div></div>\n  <div class=\"overview\">\n    <div class=\"overview-cell\"><span>TERRITORY</span><strong id=\"land\">0</strong></div>\n    <div class=\"overview-cell\"><span>ARMY</span><strong id=\"army\">0</strong></div>\n    <div class=\"overview-cell\"><span>RESERVES</span><strong id=\"reserves\">0</strong></div>\n    <div class=\"overview-cell overview-clock\"><span>WAR TIME</span><strong id=\"clock\">00:00</strong></div>\n  </div>\n  <div class=\"rail-actions\"><button id=\"pause\" title=\"Pause simulation\">PAUSE</button><button id=\"speed\" title=\"Simulation speed\">1×</button><button id=\"sound\" title=\"Toggle audio\">SOUND OFF</button></div>\n </header>\n <main class=\"war-stage\">\n  <div class=\"map-shell\"><canvas id=\"world\" aria-label=\"Interactive conquest map. Select your territory, then tap an adjacent province to attack.\"></canvas></div>\n  <div class=\"stage-head\"><span class=\"live-dot\"></span><span class=\"theatre-title\">LIVE THEATRE / OPERATION ATLAS</span><span class=\"stage-status\" id=\"status\">ESTABLISHING LINK</span></div>\n  <div class=\"view-switch\" aria-label=\"Strategic viewing scale\">\n    <button id=\"view-auto\" data-view=\"auto\" title=\"Automatically zoom out as your empire grows\">AUTO</button>\n    <button id=\"view-tactical\" data-view=\"tactical\" title=\"Micro tactical battlefield\">MICRO</button>\n    <button id=\"view-operational\" data-view=\"operational\" title=\"Regional operational front\">REGIONS</button>\n    <button id=\"view-strategic\" data-view=\"strategic\" title=\"Whole-world strategic overview\">WORLD</button>\n  </div>\n  <div class=\"view-readout\" id=\"view-label\">TACTICAL COMMAND</div>\n  <div class=\"map-tools\"><button id=\"zoom-in\" aria-label=\"Zoom in\">+</button><button id=\"zoom-out\" aria-label=\"Zoom out\">−</button><button id=\"reset-view\" aria-label=\"Reset camera\">◎</button></div>\n  <div class=\"rankings\"><div class=\"rankings-title\">THE POWER BALANCE <span>LIVE · LOCAL</span></div><div id=\"ranks\"></div></div>\n  <div class=\"map-hint\">TAP A CYAN TERRITORY → TAP A NEIGHBOUR TO ATTACK <span> · DRAG EMPTY LAND TO SCROLL</span></div>\n  <div class=\"command-deck\">\n    <div class=\"selected-module\"><span class=\"module-eyebrow\">FIELD COMMAND</span><div id=\"selected-info\">Choose a territory to command your forces.</div></div>\n    <div class=\"command-actions\"><button id=\"support\" class=\"support-action\">SEND SUPPORT</button><button id=\"mobilize\" class=\"deploy-action\">+ DEPLOY RESERVES</button><button id=\"revolt\" class=\"revolt-action\">RAISE UPRISING</button></div>\n    <button id=\"new-game\" class=\"new-game\" title=\"Restart with a new world\">↻ NEW WORLD</button>\n  </div>\n </main>\n <div class=\"toast\" id=\"toast\" role=\"status\" aria-live=\"polite\"></div>\n</div>";
     const el=(id:string)=>{const x=root.querySelector<HTMLElement>(`#${id}`);if(!x)throw new Error(`Missing HUD element ${id}`);return x;};
     this.land=el('land');this.army=el('army');this.reserves=el('reserves');
     this.clock=el('clock');this.status=el('status');this.info=el('selected-info');
     this.ranks=el('ranks');this.toast=el('toast');
+    this.viewLabel=el('view-label');
+    this.viewButtons=(['auto','tactical','operational','strategic'] as ViewPreference[])
+      .map(mode=>el('view-'+mode) as HTMLButtonElement);
+    this.viewButtons.forEach((button,i)=>{
+      const modes:ViewPreference[]=['auto','tactical','operational','strategic'];
+      button.onclick=()=>actions.onView(modes[i]);
+    });
     this.revolt=el('revolt') as HTMLButtonElement;
     this.support=el('support') as HTMLButtonElement;
     this.mobilize=el('mobilize') as HTMLButtonElement;
@@ -48,8 +58,14 @@ export class HUD {
     this.toast.textContent=text;this.toast.classList.add('show');
     this.toastTimeout=performance.now()+2400;
   }
-  render(state:GameState,selected:number|null,supportMode=false):void{
+  render(state:GameState,selected:number|null,supportMode=false,preference:ViewPreference='auto',actual:ViewMode='tactical'):void{
     const myLand=ownedTerritories(state,'player');
+    this.viewLabel.textContent=actual==='tactical'?'TACTICAL / MICRO BATTLE'
+      :actual==='operational'?'OPERATIONAL / REGIONAL FRONT':'STRATEGIC / WORLD COMMAND';
+    this.viewButtons.forEach(button=>{
+      button.classList.toggle('active',button.dataset.view===preference);
+      button.setAttribute('aria-pressed',String(button.dataset.view===preference));
+    });
     this.land.textContent=`${myLand.length}/${state.territories.length}`;
     this.army.textContent=myLand.reduce((s,t)=>s+Math.floor(t.troops),0).toLocaleString();
     this.reserves.textContent=String(Math.floor(state.factions.player.reserves));

@@ -1,5 +1,6 @@
 import { FACTIONS, HEX_RADIUS, WORLD_HEIGHT, WORLD_WIDTH } from '../game/config';
 import type { GameEvent, GameState, Territory } from '../game/types';
+import { scaleForView, type ViewMode } from '../game/view';
 
 interface Burst { x: number; y: number; life: number; color: string; text: string }
 export function hexCenter(t: Territory): { x: number; y: number } {
@@ -55,6 +56,8 @@ export class WorldRenderer {
   private scale = 1;
   private bursts: Burst[] = [];
   public hover: number | null = null;
+  public viewMode: ViewMode = 'tactical';
+  private viewFocus: {x:number;y:number}={x:265,y:230};
   constructor(private readonly canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas2D is unsupported.');
@@ -69,17 +72,31 @@ export class WorldRenderer {
     this.canvas.height = Math.round(this.height * this.dpr);
     if (fit) this.resetView();
   }
+  /**
+   * Zoom is a choice about information, not a new simulation.
+   * Preserve geographic coordinates across the three command scales.
+   */
+  setView(mode: ViewMode, state: GameState, focus: number | null = null): void {
+    this.viewMode=mode;
+    if (mode === 'strategic') {
+      this.viewFocus={x: WORLD_WIDTH/2,y: WORLD_HEIGHT/2};
+    } else {
+      const owned=state.territories.filter(t=>t.owner==='player');
+      const point=focus!==null && state.territories[focus] ? hexCenter(state.territories[focus])
+        : owned.length ? hexCenter(owned[Math.floor(owned.length/2)])
+        : hexCenter(state.territories[state.factions.player.capital]);
+      this.viewFocus=point;
+    }
+    this.resetView();
+  }
   resetView(): void {
-    // The camera is a window into a wide continuous theatre, never a tiny fitted atlas.
-    const fitHeight = (this.height - Math.min(135, this.height * 0.22)) / WORLD_HEIGHT;
-    this.scale = Math.min(1.65, Math.max(0.91, fitHeight));
-    const startX = 45 + Math.sqrt(3) * HEX_RADIUS * (2.5);
-    this.offsetX = Math.min(18, this.width * 0.33 - startX * this.scale);
-    this.offsetY = (this.height - WORLD_HEIGHT * this.scale) / 2;
+    this.scale=scaleForView(this.viewMode,this.width,this.height);
+    this.offsetX=this.width/2-this.viewFocus.x*this.scale;
+    this.offsetY=this.height/2-this.viewFocus.y*this.scale;
     this.constrainCamera();
   }
   zoom(factor: number, screenX = this.width / 2, screenY = this.height / 2): void {
-    const next = Math.min(3, Math.max(0.6, this.scale * factor));
+    const next = Math.min(3.4, Math.max(0.18, this.scale * factor));
     this.offsetX = screenX - ((screenX - this.offsetX) / this.scale) * next;
     this.offsetY = screenY - ((screenY - this.offsetY) / this.scale) * next;
     this.scale = next;
@@ -120,6 +137,8 @@ export class WorldRenderer {
     for(let x=0;x<WORLD_WIDTH;x+=84){c.beginPath();c.moveTo(x,0);c.lineTo(x,WORLD_HEIGHT);c.stroke();}
     for(let y=0;y<WORLD_HEIGHT;y+=84){c.beginPath();c.moveTo(0,y);c.lineTo(WORLD_WIDTH,y);c.stroke();}
     const targets = selected === null ? [] : [...state.territories[selected].neighbours];
+    const macro=this.viewMode==='strategic';
+    const operational=this.viewMode==='operational';
     // Mark every reachable allied province when a reinforcement order is being issued.
     if (supportMode && selected !== null && state.territories[selected].owner === 'player') {
       const visited = new Set<number>([selected]);
@@ -134,8 +153,11 @@ export class WorldRenderer {
     }
     for(const t of state.territories){
       const frontier=t.neighbours.some(n=>state.territories[n].owner!==t.owner);
-      this.drawHex(t,t.id===selected,t.id===this.hover,targets.includes(t.id),frontier,state.time);
+      this.drawHex(t,t.id===selected,t.id===this.hover,targets.includes(t.id),frontier,state.time,macro,operational);
     }
+    // Macro focus: continuous geopolitical borders and frontier concentrations.
+    if (macro || operational) this.drawPoliticalBorders(state,macro);
+    if (macro) this.drawStrategicLabels(state);
     for(const m of state.marches){
       const route = m.route?.length && m.route[0]===m.from && m.route[m.route.length-1]===m.to
         ? m.route : [m.from,m.to];
@@ -162,6 +184,43 @@ export class WorldRenderer {
     }
     c.setTransform(this.dpr,0,0,this.dpr,0,0);
   }
+  private drawPoliticalBorders(state: GameState, macro: boolean): void {
+    const c=this.ctx;
+    c.save(); c.lineJoin='round';
+    c.lineWidth=macro?3.7:2.4;
+    for(const territory of state.territories) {
+      if(!territory.owner)continue;
+      const own=hexCenter(territory);
+      for(const neighbourId of territory.neighbours) {
+        const other=state.territories[neighbourId];
+        if(other.owner===territory.owner)continue;
+        const target=hexCenter(other),mx=(own.x+target.x)*.5,my=(own.y+target.y)*.5;
+        const dx=target.x-own.x,dy=target.y-own.y;
+        const norm=Math.hypot(dx,dy)||1,px=-dy/norm*16,py=dx/norm*16;
+        c.strokeStyle=FACTIONS[territory.owner].color;
+        c.globalAlpha=macro?.85:.55;
+        c.beginPath();c.moveTo(mx-px,my-py);c.lineTo(mx+px,my+py);c.stroke();
+      }
+    }
+    c.restore();
+  }
+  private drawStrategicLabels(state: GameState): void {
+    const c=this.ctx;
+    for(const faction of Object.values(state.factions)) {
+      const owned=state.territories.filter(t=>t.owner===faction.id);
+      if(!owned.length)continue;
+      const cx=owned.reduce((sum,t)=>sum+hexCenter(t).x,0)/owned.length;
+      const cy=owned.reduce((sum,t)=>sum+hexCenter(t).y,0)/owned.length;
+      c.save();c.textAlign='center';c.textBaseline='middle';
+      c.shadowColor='#071014';c.shadowBlur=13;
+      c.fillStyle='#f1efe2';c.font='800 '+Math.max(25,14/this.scale)+'px Barlow Condensed,system-ui';
+      c.fillText(faction.name, cx, cy-16, 260);
+      c.font='700 '+Math.max(19,11/this.scale)+'px Barlow Condensed,system-ui';
+      c.fillStyle=FACTIONS[faction.id].color;
+      c.fillText(owned.length+' REGIONS',cx,cy+12,220);
+      c.restore();
+    }
+  }
   private drawBackdrop(c: CanvasRenderingContext2D): void {
     // An uninterrupted dark theatre with subtle topographic lines, not a boxed board.
     const grad=c.createLinearGradient(0,0,this.width,this.height);
@@ -182,14 +241,14 @@ export class WorldRenderer {
     shade.addColorStop(0,'#00000000');shade.addColorStop(1,'#00000083');
     c.fillStyle=shade;c.fillRect(0,0,this.width,this.height);
   }
-  private drawHex(t: Territory,selected:boolean,hovered:boolean,inReach:boolean,frontier:boolean,time:number):void{
+  private drawHex(t: Territory,selected:boolean,hovered:boolean,inReach:boolean,frontier:boolean,time:number,macro=false,operational=false):void{
     const c=this.ctx,p=hexCenter(t);
     tracePolygon(c,provinceOutline(t));
     const color=t.owner?FACTIONS[t.owner].color:'#53686b';
-    c.fillStyle=t.owner?blend('#152532',color,t.capitalOf===t.owner ? .54 : .4):'#1b2a2b';
+    c.fillStyle=t.owner?blend('#152532',color, macro ? 0.8 : operational ? 0.65 : t.capitalOf === t.owner ? 0.54 : 0.4):'#1b2a2b';
     if(selected||hovered){c.shadowColor=selected?'#65ecdf':color;c.shadowBlur=7;}
     c.fill();c.shadowBlur=0;
-    c.strokeStyle=selected?'#fff2cd':hovered?'#ffffff':inReach?'#d1c299b0':frontier?color+'91':'#ffffff10';
+    c.strokeStyle=selected?'#fff2cd':hovered?'#ffffff':inReach?'#d1c299b0':frontier?color+'91':macro?'#00000000':'#ffffff10';
     c.lineWidth=selected?2.8:inReach?1.5:frontier?1.4:.8;c.stroke();
     if(t.terrain==='highland'){c.strokeStyle='#8aa2b177';c.lineWidth=1;
       c.beginPath();c.moveTo(p.x-17,p.y-15);c.lineTo(p.x-10,p.y-23);c.lineTo(p.x-3,p.y-15);c.stroke();}
@@ -199,7 +258,10 @@ export class WorldRenderer {
       c.beginPath();c.moveTo(p.x+13,p.y-26);c.lineTo(p.x+27,p.y-22);c.lineTo(p.x+13,p.y-18);c.closePath();c.fillStyle=home;c.fill();
       c.strokeStyle=home+'88';c.lineWidth=1.3;c.beginPath();c.arc(p.x,p.y,24+Math.sin(time*1.8+t.id)*1.6,0,Math.PI*2);c.stroke();}
     c.textAlign='center';c.textBaseline='middle';c.fillStyle=t.owner?'#f0fffc':'#b8c8cb';
-    c.font='700 17px Barlow Condensed,system-ui';c.fillText(String(Math.floor(t.troops)),p.x,p.y+4);
+    if(!macro && (!operational || selected || hovered || t.capitalOf || frontier)) {
+      c.font='700 17px Barlow Condensed,system-ui';
+      c.fillText(String(Math.floor(t.troops)),p.x,p.y+4);
+    }
     if(t.capitalOf){c.fillStyle=t.capitalOf===t.owner?'#efddaf':'#ed8187';c.fillRect(p.x-2,p.y+17,4,4);}
   }
 }
