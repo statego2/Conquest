@@ -46,6 +46,14 @@ Open the URL printed by Vite. Production build: `npm run build`. Tests: `npm tes
 
 For Alpha 0.2 **only armies**, territory, and an automatically growing resistance pool. No wood, gold, food, technology tree, diplomacy menus or base-builder micro-management. Complexity should emerge from geography, tempo, defense and the strategic option to return after defeat.
 
+## Guaranteed browser playtest delivery
+
+GitHub Pages needs one-time repository configuration in **Settings → Pages → Build and deployment → Source → GitHub Actions**. A successful test/build in Actions does **not** mean the public URL works. Verify the **Publish Browser Build** workflow successfully deploys before telling testers to open https://statego2.github.io/Conquest/.
+
+Even if Pages is unavailable, the independent **Build portable playtest** workflow publishes `Conquest-Portable.html` as a downloadable artifact for each push to main. Download the artifact ZIP from the latest successful workflow run, extract the HTML file, and open it in a JavaScript-capable browser. It contains bundled JS/CSS and does not need a server or installation.
+
+When a new playable version is released: run `npm run check`, verify the portable workflow artifact, verify the Pages deployment separately, and do a real device playtest. Don't claim a public link is usable just because code was pushed.
+
 ## Production and deployment
 
 `npm run check` validates tests and creates the web build. `.github/workflows/pages.yml` is prepared to publish on pushes to `main` **once GitHub Pages is enabled in repository settings with Source = GitHub Actions**. The workflow does not provision Pages settings or guarantee a publicly accessible URL.
