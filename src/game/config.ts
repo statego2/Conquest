@@ -1,17 +1,17 @@
 import type { FactionId, Terrain } from './types';
 
-export const MAP_COLS = 13;
-export const MAP_ROWS = 9;
+export const MAP_COLS = 21;
+export const MAP_ROWS = 7;
 export const HEX_RADIUS = 35;
 export const WORLD_WIDTH = Math.sqrt(3) * HEX_RADIUS * (MAP_COLS + 0.5) + 80;
 export const WORLD_HEIGHT = HEX_RADIUS * (MAP_ROWS * 1.5 + 0.5) + 80;
 
 export const FACTIONS: Record<FactionId, { name: string; color: string; col: number; row: number }> = {
-  player: { name: 'THE FREE CITIES', color: '#5fe5d2', col: 2, row: 4 },
-  amber: { name: 'SOLAR DOMINION', color: '#e8ac55', col: 10, row: 1 },
-  coral: { name: 'CRIMSON ORDER', color: '#ed7186', col: 10, row: 7 },
-  violet: { name: 'THE ASCENDANCY', color: '#ab96f2', col: 4, row: 0 },
-  moss: { name: 'VERDANT PACT', color: '#a2cf75', col: 5, row: 8 },
+  player: { name: 'THE FREE CITIES', color: '#71d9d0', col: 2, row: 3 },
+  amber: { name: 'SOLAR DOMINION', color: '#e3b25d', col: 17, row: 1 },
+  coral: { name: 'CRIMSON ORDER', color: '#ee697a', col: 17, row: 5 },
+  violet: { name: 'THE ASCENDANCY', color: '#a797f0', col: 10, row: 0 },
+  moss: { name: 'VERDANT PACT', color: '#b0c27b', col: 10, row: 6 },
 };
 
 export const TERRAINS: Record<Terrain, { defense: number; production: number; name: string }> = {

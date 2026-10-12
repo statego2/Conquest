@@ -39,9 +39,9 @@ const hud=new HUD(root,{
 });
 renderer=new WorldRenderer(hud.canvas);
 const canvas=hud.canvas;
-const resize=new ResizeObserver(()=>renderer.resize());
+const resize=new ResizeObserver(()=>renderer.resize(true));
 resize.observe(canvas);renderer.resize(true);
-interface Pointer {id:number;x:number;y:number;startX:number;startY:number;moved:boolean;from:number|null}
+interface Pointer {id:number;x:number;y:number;startX:number;startY:number;moved:boolean;panning:boolean;from:number|null}
 let pointer:Pointer|null=null;
 const coordinates=(event:PointerEvent|WheelEvent)=>{
   const b=canvas.getBoundingClientRect();return{x:event.clientX-b.left,y:event.clientY-b.top};
@@ -49,20 +49,21 @@ const coordinates=(event:PointerEvent|WheelEvent)=>{
 canvas.addEventListener('pointerdown',(event)=>{
   if(pointer)return;
   const {x,y}=coordinates(event);
-  pointer={id:event.pointerId,x,y,startX:x,startY:y,moved:false,from:renderer.pick(game,x,y)};
+  pointer={id:event.pointerId,x,y,startX:x,startY:y,moved:false,panning:false,from:renderer.pick(game,x,y)};
   canvas.setPointerCapture(event.pointerId);
 });
 canvas.addEventListener('pointermove',(event)=>{
   const {x,y}=coordinates(event);renderer.hover=renderer.pick(game,x,y);
   if(!pointer||event.pointerId!==pointer.id)return;
   if(Math.hypot(x-pointer.startX,y-pointer.startY)>9)pointer.moved=true;
-  if(pointer.moved && (pointer.from===null || game.territories[pointer.from].owner!=='player')) renderer.pan(x-pointer.x,y-pointer.y);
+  if(pointer.moved && (pointer.from===null || game.territories[pointer.from].owner!=='player' || Math.hypot(x-pointer.startX,y-pointer.startY)>85)) pointer.panning=true;
+  if(pointer.panning)renderer.pan(x-pointer.x,y-pointer.y);
   pointer.x=x;pointer.y=y;
 });
 canvas.addEventListener('pointerup',(event)=>{
   if(!pointer||event.pointerId!==pointer.id)return;
   const {x,y}=coordinates(event),picked=renderer.pick(game,x,y);
-  if(pointer.moved && pointer.from!==null && game.territories[pointer.from].owner==='player' && picked!==null && picked!==pointer.from && isNeighbour(game,pointer.from,picked)) {
+  if(!pointer.panning && pointer.moved && pointer.from!==null && game.territories[pointer.from].owner==='player' && picked!==null && picked!==pointer.from && isNeighbour(game,pointer.from,picked)) {
     if(sendArmy(game,pointer.from,picked,event.shiftKey ? .9 : .65)){
       hud.message(game.territories[picked].owner==='player'?'Reinforcements dispatched.':'Attack launched!');
       selected=pointer.from;

@@ -31,17 +31,29 @@ export class WorldRenderer {
     if (fit) this.resetView();
   }
   resetView(): void {
-    this.scale = Math.min(this.width / WORLD_WIDTH, this.height / WORLD_HEIGHT) * 0.95;
-    this.offsetX = (this.width - WORLD_WIDTH * this.scale) / 2;
+    // The camera is a window into a wide continuous theatre, never a tiny fitted atlas.
+    const fitHeight = (this.height - Math.min(135, this.height * 0.22)) / WORLD_HEIGHT;
+    this.scale = Math.min(1.65, Math.max(0.91, fitHeight));
+    const startX = 45 + Math.sqrt(3) * HEX_RADIUS * (2.5);
+    this.offsetX = Math.min(18, this.width * 0.33 - startX * this.scale);
     this.offsetY = (this.height - WORLD_HEIGHT * this.scale) / 2;
+    this.constrainCamera();
   }
   zoom(factor: number, screenX = this.width / 2, screenY = this.height / 2): void {
-    const next = Math.min(3, Math.max(0.3, this.scale * factor));
+    const next = Math.min(3, Math.max(0.6, this.scale * factor));
     this.offsetX = screenX - ((screenX - this.offsetX) / this.scale) * next;
     this.offsetY = screenY - ((screenY - this.offsetY) / this.scale) * next;
     this.scale = next;
+    this.constrainCamera();
   }
-  pan(dx: number, dy: number): void { this.offsetX += dx; this.offsetY += dy; }
+  pan(dx: number, dy: number): void { this.offsetX += dx; this.offsetY += dy; this.constrainCamera(); }
+  private constrainCamera(): void {
+    const margin = 40;
+    if (WORLD_WIDTH * this.scale <= this.width) this.offsetX = (this.width - WORLD_WIDTH * this.scale) / 2;
+    else this.offsetX = Math.max(this.width - WORLD_WIDTH * this.scale - margin, Math.min(margin, this.offsetX));
+    if (WORLD_HEIGHT * this.scale <= this.height) this.offsetY = (this.height - WORLD_HEIGHT * this.scale) / 2;
+    else this.offsetY = Math.max(this.height - WORLD_HEIGHT * this.scale - margin, Math.min(margin, this.offsetY));
+  }
   pick(state: GameState, screenX: number, screenY: number): number | null {
     const x = (screenX - this.offsetX) / this.scale;
     const y = (screenY - this.offsetY) / this.scale;
@@ -67,9 +79,9 @@ export class WorldRenderer {
     c.clearRect(0,0,this.width,this.height);
     this.drawBackdrop(c);
     c.setTransform(this.dpr*this.scale,0,0,this.dpr*this.scale,this.offsetX*this.dpr,this.offsetY*this.dpr);
-    c.strokeStyle = 'rgba(128,176,181,0.055)'; c.lineWidth=1;
-    for(let x=0;x<WORLD_WIDTH;x+=30){c.beginPath();c.moveTo(x,0);c.lineTo(x,WORLD_HEIGHT);c.stroke();}
-    for(let y=0;y<WORLD_HEIGHT;y+=30){c.beginPath();c.moveTo(0,y);c.lineTo(WORLD_WIDTH,y);c.stroke();}
+    c.strokeStyle = 'rgba(140,156,154,0.025)'; c.lineWidth=.6;
+    for(let x=0;x<WORLD_WIDTH;x+=84){c.beginPath();c.moveTo(x,0);c.lineTo(x,WORLD_HEIGHT);c.stroke();}
+    for(let y=0;y<WORLD_HEIGHT;y+=84){c.beginPath();c.moveTo(0,y);c.lineTo(WORLD_WIDTH,y);c.stroke();}
     const targets = selected === null ? [] : state.territories[selected].neighbours;
     for(const t of state.territories) this.drawHex(t,t.id===selected,t.id===this.hover,targets.includes(t.id),state.time);
     for(const m of state.marches){
@@ -93,25 +105,36 @@ export class WorldRenderer {
     c.setTransform(this.dpr,0,0,this.dpr,0,0);
   }
   private drawBackdrop(c: CanvasRenderingContext2D): void {
-    const g=c.createRadialGradient(this.width*.5,this.height*.44,35,this.width*.5,this.height*.5,this.width*.9);
-    g.addColorStop(0,'#132936');g.addColorStop(.56,'#0b1b27');g.addColorStop(1,'#07111b');
-    c.fillStyle=g;c.fillRect(0,0,this.width,this.height);
-    c.strokeStyle='#21425266';c.lineWidth=1;c.strokeRect(12,12,this.width-24,this.height-24);
-    c.font='11px system-ui';c.textAlign='left';c.fillStyle='#577584';
-    c.fillText('TACTICAL THEATRE  /  SECTOR ATLAS 01',25,33);
-    c.textAlign='right';c.fillText('REAL-TIME SIMULATION',this.width-25,this.height-23);
+    // An uninterrupted dark theatre with subtle topographic lines, not a boxed board.
+    const grad=c.createLinearGradient(0,0,this.width,this.height);
+    grad.addColorStop(0,'#101d22');grad.addColorStop(.55,'#0c171c');grad.addColorStop(1,'#070e13');
+    c.fillStyle=grad;c.fillRect(0,0,this.width,this.height);
+    c.save();c.globalAlpha=.13;c.strokeStyle='#6c7e73';c.lineWidth=.85;
+    for(let j=0;j<17;j++){
+      const base=(j/16)*this.height;
+      c.beginPath();
+      for(let x=-25;x<=this.width+25;x+=9){
+        const y=base+Math.sin(x*.013+j*1.73)*14+Math.sin(x*.031+j*.93)*7;
+        if(x===-25)c.moveTo(x,y);else c.lineTo(x,y);
+      }
+      c.stroke();
+    }
+    c.restore();
+    const shade=c.createRadialGradient(this.width*.45,this.height*.48,40,this.width*.5,this.height*.5,this.width*.83);
+    shade.addColorStop(0,'#00000000');shade.addColorStop(1,'#00000083');
+    c.fillStyle=shade;c.fillRect(0,0,this.width,this.height);
   }
   private drawHex(t: Territory,selected:boolean,hovered:boolean,inReach:boolean,time:number):void{
-    const c=this.ctx,p=hexCenter(t),r=HEX_RADIUS-2.3;
+    const c=this.ctx,p=hexCenter(t),r=HEX_RADIUS+0.75;
     c.beginPath();for(let i=0;i<6;i++){const a=(Math.PI/180)*(60*i-90);
       const x=p.x+r*Math.cos(a),y=p.y+r*Math.sin(a);if(i===0)c.moveTo(x,y);else c.lineTo(x,y);}
     c.closePath();
-    const color=t.owner?FACTIONS[t.owner].color:'#537180';
-    c.fillStyle=t.owner?blend('#152532',color,t.capitalOf===t.owner ? .43 : .25):'#172732';
-    if(selected||hovered){c.shadowColor=selected?'#65ecdf':color;c.shadowBlur=16;}
+    const color=t.owner?FACTIONS[t.owner].color:'#53686b';
+    c.fillStyle=t.owner?blend('#152532',color,t.capitalOf===t.owner ? .54 : .4):'#1b2a2b';
+    if(selected||hovered){c.shadowColor=selected?'#65ecdf':color;c.shadowBlur=7;}
     c.fill();c.shadowBlur=0;
-    c.strokeStyle=selected?'#e8fff8':hovered?'#c9f6ef':inReach?'#74ccbfa8':t.owner?color+'96':'#395261';
-    c.lineWidth=selected?3.1:inReach?2.2:1.25;c.stroke();
+    c.strokeStyle=selected?'#fff2cd':hovered?'#ffffff':inReach?'#d1c299b0':t.owner?color+'45':'#3b515044';
+    c.lineWidth=selected?2.8:inReach?1.5:.55;c.stroke();
     if(t.terrain==='highland'){c.strokeStyle='#8aa2b177';c.lineWidth=1;
       c.beginPath();c.moveTo(p.x-17,p.y-15);c.lineTo(p.x-10,p.y-23);c.lineTo(p.x-3,p.y-15);c.stroke();}
     else if(t.terrain==='fertile'){c.fillStyle='#8dc39574';c.beginPath();c.arc(p.x-13,p.y-20,2.8,0,7);c.fill();}
@@ -120,9 +143,8 @@ export class WorldRenderer {
       c.beginPath();c.moveTo(p.x+13,p.y-26);c.lineTo(p.x+27,p.y-22);c.lineTo(p.x+13,p.y-18);c.closePath();c.fillStyle=home;c.fill();
       c.strokeStyle=home+'88';c.lineWidth=1.3;c.beginPath();c.arc(p.x,p.y,24+Math.sin(time*1.8+t.id)*1.6,0,Math.PI*2);c.stroke();}
     c.textAlign='center';c.textBaseline='middle';c.fillStyle=t.owner?'#f0fffc':'#b8c8cb';
-    c.font='700 17px system-ui';c.fillText(String(Math.floor(t.troops)),p.x,p.y-1);
-    c.font='700 9px system-ui';c.fillStyle=t.owner?color:'#668492';
-    c.fillText(String(t.id+1).padStart(3,'0'),p.x,p.y+15);
+    c.font='700 17px Barlow Condensed,system-ui';c.fillText(String(Math.floor(t.troops)),p.x,p.y+4);
+    if(t.capitalOf){c.fillStyle=t.capitalOf===t.owner?'#efddaf':'#ed8187';c.fillRect(p.x-2,p.y+17,4,4);}
   }
 }
 function blend(a:string,b:string,ratio:number):string{

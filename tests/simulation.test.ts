@@ -4,9 +4,9 @@ import { canRevolt, launchRevolt, mobilizeReserves, resolveBattle, sendArmy, tic
 import { leaderboard } from '../src/game/metrics';
 
 describe('Deterministic world', () => {
-  it('generates 117 sectors and five permanent homelands', () => {
+  it('generates 147 sectors and five permanent homelands', () => {
     const a=createGame(99),b=createGame(99);
-    expect(a).toEqual(b);expect(a.territories).toHaveLength(117);
+    expect(a).toEqual(b);expect(a.territories).toHaveLength(147);
     expect(a.territories.filter(t=>t.capitalOf)).toHaveLength(5);
   });
   it('keeps all hex neighbor links symmetric and bounded',()=>{
@@ -30,7 +30,7 @@ describe('Conquest rules',()=>{
     const before=s.territories[home].troops;
     expect(sendArmy(s,home,target,.65)).toBe(true);
     expect(s.territories[home].troops+s.marches[0].troops).toBe(before);
-    expect(sendArmy(s,home,116)).toBe(false);
+    expect(sendArmy(s,home,146)).toBe(false);
   });
   it('resolves capture according to garrison and terrain',()=>{
     const s=createGame(),target=s.territories.find(t=>!t.owner&&t.terrain==='plain')!;

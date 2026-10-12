@@ -24,38 +24,7 @@ export class HUD {
   private toastTimeout=0;
 
   constructor(root:HTMLElement,actions:HudActions){
-    root.innerHTML=`
-    <div class="shell">
-      <header class="masthead">
-        <div class="brand-mark">◆</div>
-        <div class="brand-title"><span class="eyebrow">A WORLD THAT NEVER ENDS</span><h1>INFINITE <em>CONQUEST</em></h1></div>
-        <div class="build-label"><strong>ALPHA 0.1</strong><span>SOLO · LIVE SIMULATION</span></div>
-      </header>
-      <main class="layout">
-        <section class="war-room">
-          <div class="room-topline"><span class="pulse"></span><span>THEATRE OF WAR</span><span id="status">THE WAR HAS BEGUN</span></div>
-          <div class="map-shell"><canvas id="world" aria-label="Interactive strategy map"></canvas>
-            <div class="map-hint">TAP TO SELECT · TAP ENEMY TO ATTACK <span class="desktop-only">· DRAG TROOPS TO MARCH · DRAG EMPTY MAP TO PAN · SCROLL TO ZOOM</span></div>
-            <div class="map-tools"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button><button id="reset-view" aria-label="Fit map">⤢</button></div>
-          </div>
-          <div class="gamebar"><span>TIME <b id="clock">00:00</b></span><span><b class="legend-dot" style="background:#5fe5d2"></b> YOU</span><span><b class="legend-dot" style="background:#81919c"></b> NEUTRAL</span><button id="pause">PAUSE</button><button id="speed">1× SPEED</button><button id="sound">SOUND OFF</button></div>
-        </section>
-        <aside class="dashboard">
-          <div class="panel intro-panel"><span class="eyebrow">YOUR CIVILIZATION</span><h2>THE FREE CITIES</h2><p>Empires rise. Empires fall.<br><strong>Your homeland remembers.</strong></p></div>
-          <div class="score-grid">
-            <div class="score"><span>CONTROLLED</span><strong id="land">0</strong><small>SECTORS</small></div>
-            <div class="score"><span>FIELD ARMY</span><strong id="army">0</strong><small>SOLDIERS</small></div>
-            <div class="score"><span>RESISTANCE</span><strong id="reserves">0</strong><small>RESERVE TROOPS</small></div>
-          </div>
-          <div class="panel selection-panel"><span class="eyebrow">STRATEGIC INTELLIGENCE</span><div id="selected-info">Select a sector to command your forces.</div></div>
-          <div class="action-panel"><button id="mobilize" class="primary-action">DEPLOY RESERVES</button><button id="revolt" class="revolt-action">RAISE THE UPRISING</button><p class="muted small">Resistance never disappears. Even with zero territories, your people rebuild strength.</p></div>
-          <div class="panel rankings"><div class="panel-header"><span class="eyebrow">GLOBAL POWER INDEX</span><span class="tiny-live">● LIVE · LOCAL</span></div><div id="ranks"></div></div>
-          <button id="new-game" class="new-game">↻ START A NEW WORLD</button>
-        </aside>
-      </main>
-      <footer class="footer"><span>CONQUEST / SIMULATION SYSTEMS</span><span>NO FINAL DEFEAT · NO FINAL VICTORY</span></footer>
-      <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    </div>`;
+    root.innerHTML="<div class=\"app-frame\">\n <header class=\"status-rail\">\n  <div class=\"identity\"><div class=\"identity-mark\">C<span>╱</span></div><div class=\"identity-name\"><strong>CONQUEST</strong><small>DARK STRATEGIST</small></div></div>\n  <div class=\"overview\">\n    <div class=\"overview-cell\"><span>TERRITORY</span><strong id=\"land\">0</strong></div>\n    <div class=\"overview-cell\"><span>ARMY</span><strong id=\"army\">0</strong></div>\n    <div class=\"overview-cell\"><span>RESERVES</span><strong id=\"reserves\">0</strong></div>\n    <div class=\"overview-cell overview-clock\"><span>WAR TIME</span><strong id=\"clock\">00:00</strong></div>\n  </div>\n  <div class=\"rail-actions\"><button id=\"pause\" title=\"Pause simulation\">PAUSE</button><button id=\"speed\" title=\"Simulation speed\">1×</button><button id=\"sound\" title=\"Toggle audio\">SOUND OFF</button></div>\n </header>\n <main class=\"war-stage\">\n  <div class=\"map-shell\"><canvas id=\"world\" aria-label=\"Interactive conquest map. Select your territory, then tap an adjacent province to attack.\"></canvas></div>\n  <div class=\"stage-head\"><span class=\"live-dot\"></span><span class=\"theatre-title\">WESTERN FRONT / OPERATION ATLAS</span><span class=\"stage-status\" id=\"status\">ESTABLISHING LINK</span></div>\n  <div class=\"map-tools\"><button id=\"zoom-in\" aria-label=\"Zoom in\">+</button><button id=\"zoom-out\" aria-label=\"Zoom out\">−</button><button id=\"reset-view\" aria-label=\"Reset camera\">◎</button></div>\n  <div class=\"rankings\"><div class=\"rankings-title\">THE POWER BALANCE <span>LIVE · LOCAL</span></div><div id=\"ranks\"></div></div>\n  <div class=\"map-hint\">TAP A CYAN TERRITORY → TAP A NEIGHBOUR TO ATTACK <span> · DRAG EMPTY LAND TO SCROLL</span></div>\n  <div class=\"command-deck\">\n    <div class=\"selected-module\"><span class=\"module-eyebrow\">FIELD COMMAND</span><div id=\"selected-info\">Choose a territory to command your forces.</div></div>\n    <div class=\"command-actions\"><button id=\"mobilize\" class=\"deploy-action\">+ DEPLOY RESERVES</button><button id=\"revolt\" class=\"revolt-action\">RAISE UPRISING</button></div>\n    <button id=\"new-game\" class=\"new-game\" title=\"Restart with a new world\">↻ NEW WORLD</button>\n  </div>\n </main>\n <div class=\"toast\" id=\"toast\" role=\"status\" aria-live=\"polite\"></div>\n</div>";
     const el=(id:string)=>{const x=root.querySelector<HTMLElement>(`#${id}`);if(!x)throw new Error(`Missing HUD element ${id}`);return x;};
     this.land=el('land');this.army=el('army');this.reserves=el('reserves');
     this.clock=el('clock');this.status=el('status');this.info=el('selected-info');
@@ -78,24 +47,24 @@ export class HUD {
   }
   render(state:GameState,selected:number|null):void{
     const myLand=ownedTerritories(state,'player');
-    this.land.textContent=`${myLand.length} / ${state.territories.length}`;
+    this.land.textContent=`${myLand.length}/${state.territories.length}`;
     this.army.textContent=myLand.reduce((s,t)=>s+Math.floor(t.troops),0).toLocaleString();
     this.reserves.textContent=String(Math.floor(state.factions.player.reserves));
     this.clock.textContent=formatClock(state.time);
     const occupied=state.territories[state.factions.player.capital].owner!=='player';
-    this.status.textContent=occupied?'HOMELAND OCCUPIED · RESISTANCE ACTIVE':'HOMELAND SECURE · EXPAND YOUR DOMAIN';
+    this.status.textContent=occupied?'HOMELAND OCCUPIED / RESISTANCE ACTIVE':'HOMELAND SECURE / EXPAND WEST TO EAST';
     this.status.classList.toggle('danger',occupied);
-    this.pause.textContent=state.paused?'RESUME':'PAUSE';this.speed.textContent=`${state.speed}× SPEED`;
+    this.pause.textContent=state.paused?'RESUME':'PAUSE';this.speed.textContent=`${state.speed}×`;
     this.revolt.disabled=!canRevolt(state,'player');
-    this.revolt.textContent=occupied?`RAISE THE UPRISING · ${REVOLT_MIN_RESERVES} MIN`:'HOMELAND SECURE';
+    this.revolt.textContent=occupied?`UPRISING · ${REVOLT_MIN_RESERVES} REQUIRED`:'HOMELAND SECURE';
     this.mobilize.disabled=selected===null||state.territories[selected].owner!=='player'||state.factions.player.reserves<15;
     if(selected!==null){
       const t=state.territories[selected],def=TERRAINS[t.terrain];
       const owner=t.owner?FACTIONS[t.owner].name:'INDEPENDENT';
       this.info.innerHTML=`<div class="sector-heading"><strong>SECTOR ${String(t.id+1).padStart(3,'0')}</strong><span>${t.capitalOf?'⚑ CAPITAL':def.name.toUpperCase()}</span></div>
         <div class="sector-owner">${owner}</div><div class="sector-stats"><span>GARRISON <b>${Math.floor(t.troops)}</b></span><span>DEFENSE <b>${def.defense.toFixed(2)}×</b></span></div>
-        <p class="muted small">${t.owner==='player'?'Tap adjacent enemy to attack; drag to adjacent ally to reinforce. Hold Shift while attacking for 90%.':'Select a friendly sector to command your attack.'}</p>`;
-    }else this.info.innerHTML='<p class="muted">Select a teal sector, then tap an adjacent sector to attack or reinforce.</p>';
+        <p class="muted small">${t.owner==='player'?'Tap an adjacent sector to attack or reinforce.':'Select one of your territories to attack.'}</p>`;
+    }else this.info.innerHTML='<p class="muted">Select a cyan territory, then tap its neighbour.</p>';
     this.ranks.innerHTML=leaderboard(state).map((rank,i)=>`<div class="rank-row ${rank.id==='player'?'me':''}">
       <span class="rank-n">0${i+1}</span><span class="rank-swatch" style="background:${FACTIONS[rank.id].color}"></span>
       <span class="rank-name">${rank.name}</span><strong>${rank.territories}</strong></div>`).join('');

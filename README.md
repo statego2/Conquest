@@ -1,8 +1,8 @@
-# INFINITE CONQUEST
+# Conquest — Dark Strategist
 
 **Reign. Fall. Rise again.** A living-world, real-time territorial strategy game with persistent national resistance.
 
-**Status:** Alpha 0.1 · browser-only, single-player. Steam, accounts, multiplayer and real online leaderboards are future milestones — not live features.
+**Status:** Alpha 0.2 · browser-only, single-player. Steam, accounts, multiplayer and real online leaderboards are future milestones — not live features.
 
 ## Quick start
 
@@ -17,7 +17,7 @@ Open the URL printed by Vite. Production build: `npm run build`. Tests: `npm tes
 
 ## Play
 
-- **Tap/click one of your teal territories**, then tap/click an adjacent **enemy** sector to send **65%** of its troops. On desktop hold **Shift** while attacking to send **90%**.
+- **Tap/click one of your cyan territories**, then tap/click an adjacent **enemy** sector to send **65%** of its troops. On desktop hold **Shift** while attacking to send **90%**.
 - Troops regenerate automatically. Neutral areas start lightly defended; highlands and citadels have stronger defense.
 - Drag from a friendly sector onto an adjacent allied sector to reinforce it. Tap any friendly sector to select it.
 - **Deploy reserves** onto a selected friendly territory, or press **Raise the uprising** when your homeland is occupied and you have enough reserves.
@@ -43,7 +43,7 @@ Open the URL printed by Vite. Production build: `npm run build`. Tests: `npm tes
 
 ## Design constraint
 
-For Alpha 0.1 **only armies**, territory, and an automatically growing resistance pool. No wood, gold, food, technology tree, diplomacy menus or base-builder micro-management. Complexity should emerge from geography, tempo, defense and the strategic option to return after defeat.
+For Alpha 0.2 **only armies**, territory, and an automatically growing resistance pool. No wood, gold, food, technology tree, diplomacy menus or base-builder micro-management. Complexity should emerge from geography, tempo, defense and the strategic option to return after defeat.
 
 ## Production and deployment
 
@@ -61,4 +61,4 @@ The independent **Dark Strategist** SVG art library, [art direction](docs/ART_DI
 
 ### Static mobile-ready playtest
 
-The dependency-free ES module build is checked in to [`play/`](play/) and mirrored in [`public/play/`](public/play/) so the [playtest page](https://statego2.github.io/Conquest/play/) works whether GitHub Pages serves the source branch or the Vite production artifact. Source code remains TypeScript under `src/`. Regenerate these generated JS modules after changing game logic; do not hand-edit them.
+The official browser entrypoint is [Conquest — Dark Strategist](https://statego2.github.io/Conquest/). The legacy [playtest link](https://statego2.github.io/Conquest/play/) redirects to the same current build; old JS snapshots are no longer used. Landscape phone orientation is recommended; the map is horizontally scrollable, and tapping adjacent provinces works in portrait too.
