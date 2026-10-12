@@ -18,7 +18,7 @@ Open the URL printed by Vite. Production build: `npm run build`. Tests: `npm tes
 ## Play
 
 - **Tap/click one of your cyan territories**, then tap/click an adjacent **enemy** sector to send **65%** of its troops. On desktop hold **Shift** while attacking to send **90%**.
-- Troops recruit automatically from a **finite local manpower pool** that replenishes slowly; growth slows beyond 90 troops/sector and caps at 220. Neutral areas start lightly defended; highlands and citadels have stronger defense.
+- Troops recruit automatically from a **finite local manpower pool** that replenishes slowly; local production slows beyond 90 and stops at 220 troops/sector; reinforcements can concentrate larger armies. Neutral areas start lightly defended; highlands and citadels have stronger defense.
 - **Send Support:** select a friendly sector, press **SEND SUPPORT**, then tap any friendly destination connected through your territory. Long routes take longer, and captured corridors can intercept convoys.
 - Drag from a friendly sector onto an adjacent allied sector to reinforce it immediately. Tap any friendly sector to select it.
 - **Deploy reserves** onto a selected friendly territory, or press **Raise the uprising** when your homeland is occupied. Resistance also consumes finite homeland manpower, and receives a homeland-specific assault advantage.
