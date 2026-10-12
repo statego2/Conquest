@@ -1,16 +1,14 @@
 # CONQUEST
 
-A territory-conquest strategy game prototype.
+**CONQUEST** is a strategy game about conquest, occupation, revolt, strategic patience, and reconquest.
 
-The first production layer is the **art-direction system and asset library**: a strategic map language built around provinces, armies, capitals, occupation, uprisings, and reconquest.
+## Visual identity: DARK STRATEGIST
+Not cheerful fantasy, not oversaturated mobile UI: a **war room at midnight**, on a cold atlas of contested provinces. Scarred iron, smoke-black slate, distressed parchment and dull brass frame the decisions. Faction colors are reserved for meaningful territorial ownership. **Political power is temporary; every captured region can become a threat again.**
 
-## Art package
+## First art package
+- [Art direction bible](docs/ART_DIRECTION.md)
+- [Asset pipeline and inventory](docs/ASSET_PIPELINE.md)
+- [Art gallery and interactive map mockup](art-preview.html)
+- [Machine-readable manifest](public/assets/conquest/manifest.json)
 
-- [Art direction and visual rules](docs/ART_DIRECTION.md)
-- [Asset inventory and implementation guide](docs/ASSET_PIPELINE.md)
-- [Visual asset gallery](art-preview.html)
-- [Asset manifest](public/assets/conquest/manifest.json)
-
-All first-pass art assets are **hand-authored, self-contained SVG** files: no external fonts, images, or dependencies. The asset preview runs in a browser without a build step.
-
-> This is the **visual foundation**, not a claim that the gameplay is implemented. The demo map in the preview is fictional and intended to validate art readability and interaction states.
+This first pass includes source-native **SVG assets** (icons, army tokens, settlements, shields, terrain swatches, UI status markers and war-room background) that work directly as web image sources. The preview is a visual interaction prototype, **not a complete strategy engine**. All designs are original vectors with no external image/font dependencies.
