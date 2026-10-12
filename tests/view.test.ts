@@ -3,7 +3,7 @@ import { automaticView, factionCentroid, resolveView, scaleForView } from '../sr
 import { createGame } from '../src/game/world';
 
 describe('Three levels of command', () => {
-  it('begins on a tactical battlefield and scales with the player's empire', () => {
+  it('begins on a tactical battlefield and scales with the player empire', () => {
     expect(automaticView(1)).toBe('tactical');
     expect(automaticView(7)).toBe('tactical');
     expect(automaticView(8)).toBe('operational');
