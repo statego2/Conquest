@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('the actual public GitHub Pages URL runs a playable canvas and controls',async({page},testInfo)=>{
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
-  const response=await page.goto('/',{waitUntil:'domcontentloaded'});
+  const response=await page.goto('https://statego2.github.io/Conquest/',{waitUntil:'domcontentloaded'});
   expect(response?.status()).toBe(200);
   await expect(page.locator('#world')).toBeVisible({timeout:15000});
   await expect(page.locator('#land')).toContainText('/');
