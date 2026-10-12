@@ -432,8 +432,17 @@ export class WorldRenderer {
     if(!macro&&!operational)this.drawBattalion(t,p,time);
     c.textAlign='center';c.textBaseline='middle';c.fillStyle=t.owner?'#f0fffc':'#b8c8cb';
     if(!macro && (!operational || selected || hovered || t.capitalOf || frontier)) {
-      c.font='700 17px Barlow Condensed,system-ui';
-      c.fillText(String(Math.floor(t.troops)),p.x,p.y+4);
+      // Tactical unit counter, not enormous chess-board numbers.
+      const amount=String(Math.floor(t.troops));
+      const badgeWidth=Math.max(23,amount.length*9+10);
+      c.fillStyle=selected?'#11262bdc':'#0c1c22bc';
+      c.beginPath();c.roundRect(p.x-badgeWidth/2,p.y+4,badgeWidth,17,5);c.fill();
+      c.strokeStyle=selected?'#f2dcaa8a':t.owner?color+'a0':'#6c8e8a55';
+      c.lineWidth=.65;c.stroke();
+      c.textAlign='center';c.textBaseline='middle';
+      c.fillStyle=selected?'#fff5df':'#e1eee6';
+      c.font='700 12px Barlow Condensed,system-ui';
+      c.fillText(amount,p.x,p.y+12);
     }
     if(t.capitalOf){c.fillStyle=t.capitalOf===t.owner?'#efddaf':'#ed8187';c.fillRect(p.x-2,p.y+17,4,4);}
   }
