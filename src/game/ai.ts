@@ -1,5 +1,5 @@
 import { TERRAINS } from './config';
-import { launchRevolt, mobilizeReserves, sendArmy } from './simulation';
+import { friendlyRoute, launchRevolt, mobilizeReserves, sendArmy, sendSupport } from './simulation';
 import type { FactionId, GameState, Territory } from './types';
 
 const AI_IDS: FactionId[] = ['amber', 'coral', 'violet', 'moss'];
@@ -36,24 +36,24 @@ export function updateAI(state: GameState, dt: number): void {
         .sort((a, b) => b.value - a.value)[0];
       if (target && target.value > -25) {
         const available = Math.floor(source.troops * 0.72);
-        if (available > target.t.troops * TERRAINS[target.t.terrain].defense * 0.72) {
+        // Attacks must actually have enough force to overcome defensive terrain.
+        if (available > target.t.troops * TERRAINS[target.t.terrain].defense + 3) {
           sendArmy(state, source.id, target.t.id, 0.72);
           continue;
         }
       }
     }
 
-    // Redistribute strong rear garrisons toward an under-defended frontier.
-    const rear = owned.filter((t) => t.troops > 42 && t.neighbours.every((n) => state.territories[n].owner === id)).sort((a,b) => b.troops-a.troops)[0];
+    // Supply an endangered frontline across ANY connected friendly corridor.
+    // Keep meaningful reserves at the rear rather than emptying every homeland.
+    const rear=owned.filter(t=>t.troops>78 &&
+      t.neighbours.every(n=>state.territories[n].owner===id)).sort((a,b)=>b.troops-a.troops)[0];
     if (!rear) continue;
-    const destination = rear.neighbours.map((n) => state.territories[n]).filter((t) => t.owner === id).sort((a, b) => {
-      const af = a.neighbours.some((n) => state.territories[n].owner !== id) ? -25 : 0;
-      const bf = b.neighbours.some((n) => state.territories[n].owner !== id) ? -25 : 0;
-      return (a.troops + af) - (b.troops + bf);
-    })[0];
-    if (destination && destination.troops < rear.troops * 0.8) {
-      sendArmy(state, rear.id, destination.id, 0.6);
-    }
+    const destination=owned.filter(t=>t.id!==rear.id && t.troops<55 &&
+      t.neighbours.some(n=>state.territories[n].owner!==id) &&
+      friendlyRoute(state,rear.id,t.id)!==null)
+      .sort((a,b)=>a.troops-b.troops)[0];
+    if (destination) sendSupport(state,rear.id,destination.id,0.5);
   }
 }
 

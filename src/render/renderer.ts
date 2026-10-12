@@ -110,7 +110,7 @@ export class WorldRenderer {
     }
     if (this.bursts.length > 24) this.bursts.splice(0,this.bursts.length-24);
   }
-  render(state: GameState, selected: number | null, dt: number): void {
+  render(state: GameState, selected: number | null, dt: number, supportMode = false): void {
     const c = this.ctx;
     c.setTransform(this.dpr,0,0,this.dpr,0,0);
     c.clearRect(0,0,this.width,this.height);
@@ -119,17 +119,35 @@ export class WorldRenderer {
     c.strokeStyle = 'rgba(140,156,154,0.025)'; c.lineWidth=.6;
     for(let x=0;x<WORLD_WIDTH;x+=84){c.beginPath();c.moveTo(x,0);c.lineTo(x,WORLD_HEIGHT);c.stroke();}
     for(let y=0;y<WORLD_HEIGHT;y+=84){c.beginPath();c.moveTo(0,y);c.lineTo(WORLD_WIDTH,y);c.stroke();}
-    const targets = selected === null ? [] : state.territories[selected].neighbours;
+    const targets = selected === null ? [] : [...state.territories[selected].neighbours];
+    // Mark every reachable allied province when a reinforcement order is being issued.
+    if (supportMode && selected !== null && state.territories[selected].owner === 'player') {
+      const visited = new Set<number>([selected]);
+      const queue = [selected];
+      for (let i = 0; i < queue.length; i++) {
+        for (const id of state.territories[queue[i]].neighbours) {
+          if (visited.has(id) || state.territories[id].owner !== 'player') continue;
+          visited.add(id); queue.push(id);
+        }
+      }
+      targets.splice(0,targets.length,...queue.slice(1));
+    }
     for(const t of state.territories){
       const frontier=t.neighbours.some(n=>state.territories[n].owner!==t.owner);
       this.drawHex(t,t.id===selected,t.id===this.hover,targets.includes(t.id),frontier,state.time);
     }
     for(const m of state.marches){
-      const a=hexCenter(state.territories[m.from]), b=hexCenter(state.territories[m.to]);
+      const route = m.route?.length && m.route[0]===m.from && m.route[m.route.length-1]===m.to
+        ? m.route : [m.from,m.to];
+      const positions=route.map(id=>hexCenter(state.territories[id]));
       const pct=Math.min(1,m.elapsed/m.duration), color=FACTIONS[m.owner].color;
       c.strokeStyle=color+'77';c.lineWidth=2.2;c.setLineDash([5,6]);c.lineDashOffset=-state.time*15;
-      c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();c.setLineDash([]);
-      const x=a.x+(b.x-a.x)*pct,y=a.y+(b.y-a.y)*pct;
+      c.beginPath();positions.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));
+      c.stroke();c.setLineDash([]);
+      const stage=Math.min((positions.length-1)-0.00001,pct*(positions.length-1));
+      const segment=Math.floor(stage), local=stage-segment;
+      const a=positions[segment],b=positions[segment+1];
+      const x=a.x+(b.x-a.x)*local,y=a.y+(b.y-a.y)*local;
       c.beginPath();c.fillStyle=color;c.shadowColor=color;c.shadowBlur=14;c.arc(x,y,7,0,Math.PI*2);c.fill();c.shadowBlur=0;
       c.fillStyle='#ecfcf8';c.font='bold 10px system-ui';c.textAlign='center';c.textBaseline='middle';
       c.fillText(String(m.troops),x,y-14);

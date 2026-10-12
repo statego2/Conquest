@@ -57,6 +57,9 @@ button:not(:disabled):active{transform:translateY(1px)}
 .selected-module p{display:none}
 .command-actions{display:flex;gap:8px;align-items:stretch;flex:none}
 .command-actions button{min-width:155px;padding:15px 16px;font-size:15px}
+.support-action{background:#12353b;color:#9beadf;border-color:#3b7b7c}
+.support-action.active{background:#b6ddca;color:#061b1f;border-color:#e8f5d8}
+.support-action:not(:disabled):hover{border-color:#adf5e3}
 .deploy-action{background:#c8ad78;color:#151a18;border-color:#e0c48b}
 .deploy-action:not(:disabled):hover{background:#efd39c}
 .revolt-action{background:#401e29;color:#f3afb2;border-color:#704250}
