@@ -12,7 +12,7 @@ export interface RankingRow {
 // Local performance metric only: not an online/secure leaderboard.
 export function leaderboard(state: GameState): RankingRow[] {
   return Object.values(state.factions).map((faction) => {
-    const land = state.territories.filter((t) => t.owner === faction.id);
+    const land = state.territories.filter((t) => t.owner === faction.id && t.terrain!=='sea');
     const troops = totalTroops(state,faction.id);
     return {
       id: faction.id, name: faction.name, territories: land.length, troops,
