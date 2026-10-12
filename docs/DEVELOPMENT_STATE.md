@@ -13,15 +13,16 @@ Updated: 2026-10-12
 
 ### Current implementation
 - Vite 8, TypeScript strict, Canvas2D frontend, pure simulation under `src/game/`, AI `src/game/ai.ts`, render `src/render/`, UI `src/ui/`.
-- Seeded 21x7 map (147 sectors), five factions, real-time continuous simulation, recruitment, marches, deterministic combat, occupation, resistance, uprisings, local autosaves.
+- Seeded 33×19 continental theatre (~377 land sectors, ocean, bays and peninsulas), five factions, real-time continuous simulation, recruitment, marches, deterministic combat, occupation, resistance, uprisings, local autosaves.
 - Supply corridors: BFS legal path through allied sectors, distance-based travel, interception if the route falls.
 - Variable troop commitment 35/65/90%, battle forecast, and percentage-based rebellion that can retain uncommitted reserves.
 - Finite local manpower shared with cultural resistance. Soft-cap slower recruitment; 220 is a *production* limit, NOT a prohibition on combining existing field armies.
 - AI can coordinate support via supply corridors, gather enough force for a fortified assault, and choose more rational uprising timing.
 - MICRO terrain contains roads, overhead ridges, vegetation, citadel features and troop formation glyphs. REGIONS emphasizes fronts; WORLD emphasizes empire boundaries and strength.
 - AUTO automatically zooms out at 8+ and 28+ owned territories. Manual view controls always override it. Phone gestures include pinch-zoom.
-- Scoreboard accounts for troops on the march; full conquest is a persistent milestone.
-- V2 legacy saves migrate to the current V3 schema preserving armies and territory.
+- Scoreboard accounts for troops on the march; full conquest of land (excluding impassable sea) is a persistent milestone.
+- WORLD is directly playable with grouped on-map troop count markers, selectable friendly army groupings, legal distant orders along friendly supply corridors, and a compact mobile command deck.
+- V2/V3 legacy 147-sector saves migrate to V4 world format by embedding all conquered regions, capitals and moving armies into the enlarged continent.
 - Core quality gates: `npm run check` (Vitest and strict TypeScript production build). New Chromium mobile smoke workflow verifies views, controls and takes screenshots in landscape/portrait.
 
 ### Evidence and limitations
