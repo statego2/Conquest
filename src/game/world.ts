@@ -32,6 +32,7 @@ export function territoryId(col: number, row: number): number {
 }
 
 export function hexNeighbours(col: number, row: number): number[] {
+  if(!isLandCell(col,row))return [];
   const offsets = row % 2 === 0
     ? [[-1, 0], [1, 0], [-1, -1], [0, -1], [-1, 1], [0, 1]]
     : [[-1, 0], [1, 0], [0, -1], [1, -1], [0, 1], [1, 1]];
