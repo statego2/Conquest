@@ -1,5 +1,6 @@
 name: Diagnose live GitHub Pages
 on:
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,6 +29,13 @@ jobs:
             https://statego2.github.io/Conquest/ || true
           sed -n '1,28p' /tmp/conquest-headers || true
           head -c 850 /tmp/conquest-response || true
+          echo
+          echo '=== Does public root contain compiled playable game? ==='
+          if grep -q 'conquest-build' /tmp/conquest-response; then
+            echo 'VERIFIED_COMPILED=true'
+          else
+            echo 'VERIFIED_COMPILED=false'
+          fi
           echo
           echo '=== Wrong-case and parent origin ==='
           for url in https://statego2.github.io/ https://statego2.github.io/conquest/ ; do
