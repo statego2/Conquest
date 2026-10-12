@@ -113,16 +113,26 @@ export class WorldRenderer {
     if (WORLD_HEIGHT * this.scale <= visibleHeight) this.offsetY = (visibleHeight - WORLD_HEIGHT * this.scale) / 2;
     else this.offsetY = Math.max(visibleHeight - WORLD_HEIGHT * this.scale - margin, Math.min(margin, this.offsetY));
   }
-  pick(state: GameState, screenX: number, screenY: number): number | null {
-    if(this.viewMode==='strategic') {
-      const marker=this.armyMarkers.find(m=>Math.hypot(m.x-screenX,m.y-screenY)<18);
+  pick(state: GameState, screenX: number, screenY: number, sourceId:number|null=null): number | null {
+    const x=(screenX-this.offsetX)/this.scale;
+    const y=(screenY-this.offsetY)/this.scale;
+    let direct:number|null=null;
+    for(const t of state.territories){
+      if(t.terrain!=='sea'&&pointInPolygon(provinceOutline(t),x,y)){direct=t.id;break;}
+    }
+    if(this.viewMode==='strategic'){
+      // The army badges are easy touch targets but must NEVER make the
+      // neighbouring hostile frontline impossible to command.
+      const source=sourceId===null?null:state.territories[sourceId];
+      if(direct!==null && source?.owner==='player' && state.territories[direct].owner!=='player'){
+        const p=hexCenter(state.territories[direct]);
+        const distance=Math.hypot(p.x*this.scale+this.offsetX-screenX,p.y*this.scale+this.offsetY-screenY);
+        if(distance<10)return direct;
+      }
+      const marker=this.armyMarkers.find(m=>Math.abs(m.x-screenX)<24 && Math.abs(m.y-screenY)<12);
       if(marker)return marker.id;
     }
-    const x = (screenX - this.offsetX) / this.scale;
-    const y = (screenY - this.offsetY) / this.scale;
-    for (const t of state.territories) {
-      if (t.terrain!=='sea'&&pointInPolygon(provinceOutline(t),x,y))return t.id;
-    }
+    if(direct!==null)return direct;
     // Tiny strategic cells are difficult to hit on a phone; allow a small
     // screen-space hit radius without turning distant sea into clickable land.
     if(this.viewMode==='strategic') {
