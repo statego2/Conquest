@@ -25,4 +25,10 @@ export const MARCH_SECONDS = 0.95;
 export const REVOLT_MIN_RESERVES = 45;
 export const REVOLT_COOLDOWN = 6;
 export const RESERVE_CAP = 280;
-export const MAX_TROOPS = 999;
+// Starting balance hypotheses. The production rate above soft cap is deliberately slow.
+export const MAX_TROOPS = 220;
+export const TROOP_SOFT_CAP = 90;
+export const SOFT_CAP_PRODUCTION_FACTOR = 0.12;
+export const MANPOWER_CAP = 240;
+export const MANPOWER_RECOVERY = 0.75;
+export const HOMELAND_UPRISING_BONUS = 1.65;
