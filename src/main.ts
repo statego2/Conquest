@@ -78,7 +78,7 @@ canvas.addEventListener('pointerdown',(event)=>{
     return;
   }
   if(pointer)return;
-  pointer={id:event.pointerId,x,y,startX:x,startY:y,moved:false,panning:false,from:renderer.pick(game,x,y)};
+  pointer={id:event.pointerId,x,y,startX:x,startY:y,moved:false,panning:false,from:renderer.pick(game,x,y,selected)};
 });
 canvas.addEventListener('pointermove',(event)=>{
   const {x,y}=coordinates(event);
@@ -92,7 +92,7 @@ canvas.addEventListener('pointermove',(event)=>{
     lastPinchDistance=distance;lastPinchCenter=center;
     return;
   }
-  renderer.hover=renderer.pick(game,x,y);
+  renderer.hover=renderer.pick(game,x,y,selected);
   if(!pointer||event.pointerId!==pointer.id)return;
   if(Math.hypot(x-pointer.startX,y-pointer.startY)>9)pointer.moved=true;
   if(pointer.moved && (pointer.from===null || game.territories[pointer.from].owner!=='player' || Math.hypot(x-pointer.startX,y-pointer.startY)>85)) pointer.panning=true;
@@ -106,7 +106,7 @@ canvas.addEventListener('pointerup',(event)=>{
     pointer=null;return;
   }
   if(!pointer||event.pointerId!==pointer.id)return;
-  const {x,y}=coordinates(event),picked=renderer.pick(game,x,y);
+  const {x,y}=coordinates(event),picked=renderer.pick(game,x,y,selected);
   // WORLD is now an actual command layer: tapping a friendly battalion
   // selects its region; tapping a reachable enemy issues a routed offensive.
   // No forced return to tactical mode.
