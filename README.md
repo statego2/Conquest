@@ -56,7 +56,9 @@ When a new playable version is released: run `npm run check`, verify the portabl
 
 ## Production and deployment
 
-`npm run check` validates tests and creates the web build. `.github/workflows/pages.yml` is prepared to publish on pushes to `main` **once GitHub Pages is enabled in repository settings with Source = GitHub Actions**. The workflow does not provision Pages settings or guarantee a publicly accessible URL.
+Deployment debugged on 12 October 2026: the public address returned HTTP 200 but exposed the raw Vite source `index.html` containing `/src/main.ts`; the GitHub Pages API confirmed `build_type=legacy` and `source=main:/`. Successful Actions deployment jobs were **not** what legacy Pages was serving. The site was effectively a blank shell.
+
+The public root `index.html` is now the generated, fully bundled HTML entrypoint for GitHub Pages, while development and Vite production builds compile from `index.source.html`. The `Publish Browser Build` workflow detects the site's current mode: in `legacy`, it places the compiled HTML directly at `main/index.html` and explicitly requests a Pages rebuild; in `workflow`, it deploys `dist/` through actions/deploy-pages. It also checks the real HTTPS response contains the compiled-game marker and fails loudly if publishing did not work. This fix does not require changing Pages settings or installing anything on the user's Mac.
 
 The in-game **GLOBAL POWER INDEX** is an on-device live ranking of factions within the current simulation, **not** a global network leaderboard. Do not use untrusted client scores for the future Steam leaderboard; see `docs/ARCHITECTURE.md`.
 
