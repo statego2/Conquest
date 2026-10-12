@@ -26,6 +26,7 @@ export const REVOLT_MIN_RESERVES = 45;
 export const REVOLT_COOLDOWN = 6;
 export const RESERVE_CAP = 280;
 // Starting balance hypotheses. The production rate above soft cap is deliberately slow.
+// Maximum locally recruited standing force; external armies may exceed this via reinforcements.
 export const MAX_TROOPS = 220;
 export const TROOP_SOFT_CAP = 90;
 export const SOFT_CAP_PRODUCTION_FACTOR = 0.12;
