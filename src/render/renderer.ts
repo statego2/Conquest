@@ -213,9 +213,9 @@ export class WorldRenderer {
       const cy=owned.reduce((sum,t)=>sum+hexCenter(t).y,0)/owned.length;
       c.save();c.textAlign='center';c.textBaseline='middle';
       c.shadowColor='#071014';c.shadowBlur=13;
-      c.fillStyle='#f1efe2';c.font='800 28px Barlow Condensed,system-ui';
+      c.fillStyle='#f1efe2';c.font='800 '+Math.max(25,14/this.scale)+'px Barlow Condensed,system-ui';
       c.fillText(faction.name, cx, cy-16, 260);
-      c.font='700 21px Barlow Condensed,system-ui';
+      c.font='700 '+Math.max(19,11/this.scale)+'px Barlow Condensed,system-ui';
       c.fillStyle=FACTIONS[faction.id].color;
       c.fillText(owned.length+' REGIONS',cx,cy+12,220);
       c.restore();
@@ -245,7 +245,7 @@ export class WorldRenderer {
     const c=this.ctx,p=hexCenter(t);
     tracePolygon(c,provinceOutline(t));
     const color=t.owner?FACTIONS[t.owner].color:'#53686b';
-    c.fillStyle=t.owner?blend('#152532',color, macro?.8:operational?.65:t.capitalOf===t.owner?.54:.4):'#1b2a2b';
+    c.fillStyle=t.owner?blend('#152532',color, macro ? 0.8 : operational ? 0.65 : t.capitalOf === t.owner ? 0.54 : 0.4):'#1b2a2b';
     if(selected||hovered){c.shadowColor=selected?'#65ecdf':color;c.shadowBlur=7;}
     c.fill();c.shadowBlur=0;
     c.strokeStyle=selected?'#fff2cd':hovered?'#ffffff':inReach?'#d1c299b0':frontier?color+'91':macro?'#00000000':'#ffffff10';
