@@ -21,7 +21,7 @@ export type Forecast = { outcome: 'win'|'lose'|'hold'|'invalid'; attacking: numb
  */
 export function battleForecast(state:GameState,from:number,to:number,commitment:Commitment):Forecast {
   const source=state.territories[from],target=state.territories[to];
-  if(!source||!target||!source.owner||!source.neighbours.includes(to))return {outcome:'invalid',attacking:0,defending:0,surviving:0,disadvantage:0};
+  if(!source||!target||target.terrain==='sea'||!source.owner||!source.neighbours.includes(to))return {outcome:'invalid',attacking:0,defending:0,surviving:0,disadvantage:0};
   const troops=committedTroops(source.troops,commitment);
   if(troops<2)return {outcome:'invalid',attacking:troops,defending:target.troops,surviving:0,disadvantage:0};
   if(target.owner===source.owner)return {outcome:'hold',attacking:troops,defending:target.troops,surviving:troops,disadvantage:0};

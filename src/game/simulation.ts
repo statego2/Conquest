@@ -13,7 +13,7 @@ export function isNeighbour(state: GameState, from: number, to: number): boolean
 export function sendArmy(state: GameState, from: number, to: number, fraction = 0.65): boolean {
   const source = state.territories[from];
   const target = state.territories[to];
-  if (!source || !target || !source.owner || !isNeighbour(state, from, to)) return false;
+  if (!source || !target || !source.owner || target.terrain === 'sea' || !isNeighbour(state, from, to)) return false;
   const troops = committedTroops(source.troops,fraction);
   if (troops < 2) return false;
   source.troops -= troops;
@@ -60,9 +60,36 @@ export function sendSupport(state: GameState, from: number, to: number, fraction
   return true;
 }
 
+/**
+ * Grand strategy order: send a field army through owned supply territory to
+ * attack a reachable hostile frontline sector. Traversal is never teleportation.
+ * The player can command offensives from WORLD as well as MICRO.
+ */
+export function sendOffensive(state:GameState, from:number, to:number, fraction=0.65):boolean {
+  const source=state.territories[from], target=state.territories[to];
+  if(!source?.owner || !target || target.owner===source.owner || target.terrain==='sea')return false;
+  if(isNeighbour(state,from,to))return sendArmy(state,from,to,fraction);
+  let best:number[]|null=null;
+  for(const neighbour of target.neighbours) {
+    if(state.territories[neighbour].owner!==source.owner)continue;
+    const route=friendlyRoute(state,from,neighbour);
+    if(route && (!best||route.length<best.length))best=route;
+  }
+  if(!best)return false;
+  const troops=committedTroops(source.troops,fraction);
+  if(troops<2)return false;
+  source.troops-=troops;
+  const route=[...best,to];
+  state.marches.push({
+    id:state.nextMarchId++,from,to,owner:source.owner,troops,
+    duration:MARCH_SECONDS*(route.length-1),elapsed:0,route
+  });
+  return true;
+}
+
 export function resolveBattle(state: GameState, owner: FactionId, id: number, attackers: number, uprising = false): void {
   const target = state.territories[id];
-  if (!target || attackers <= 0) return;
+  if (!target || target.terrain === 'sea' || attackers <= 0) return;
   if (target.owner === owner) {
     // The cap limits local recruitment, not the size of an arriving field army.
     target.troops += attackers;
@@ -125,7 +152,7 @@ export function tick(state: GameState, dt: number): void {
   state.events.length = 0;
 
   for (const province of state.territories) {
-    if (!province.owner) continue;
+    if (!province.owner || province.terrain === 'sea') continue;
     const rate = TERRAINS[province.terrain].production;
     const homelandBoost = province.capitalOf === province.owner ? 0.45 : 0;
     // Population recovers slowly; recruitment actually transfers population into military.

@@ -27,7 +27,7 @@ export function updateAI(state: GameState, dt: number): void {
 
     const owned=state.territories.filter(t=>t.owner===id);
     if(!owned.length)continue;
-    const front=owned.filter(t=>t.neighbours.some(n=>state.territories[n].owner!==id));
+    const front=owned.filter(t=>t.neighbours.some(n=>state.territories[n].owner!==id && state.territories[n].terrain!=='sea'));
     if(!front.length)continue;
 
     // Only spend the cultural reserve away from home when the homeland is secure.
@@ -38,7 +38,7 @@ export function updateAI(state: GameState, dt: number): void {
 
     // 1. Exploit an actually beatable neighbouring province.
     const attacks=front.flatMap(source=>source.neighbours.map(n=>state.territories[n])
-      .filter(target=>target.owner!==id)
+      .filter(target=>target.owner!==id && target.terrain!=='sea')
       .map(target=>({source,target,margin:source.troops*.72-
         target.troops*TERRAINS[target.terrain].defense,
         score:(target.owner===null?45:0)+(target.capitalOf?25:0)-
@@ -60,7 +60,7 @@ export function updateAI(state: GameState, dt: number): void {
     const arrival=objective.source;
     const donors=owned.filter(t=>t.id!==arrival.id && t.troops>65 &&
       friendlyRoute(state,t.id,arrival.id)!==null)
-      .map(t=>({territory:t,retained:t.neighbours.some(n=>state.territories[n].owner!==id)?60:25}))
+      .map(t=>({territory:t,retained:t.neighbours.some(n=>state.territories[n].owner!==id && state.territories[n].terrain!=='sea')?60:25}))
       .filter(t=>t.territory.troops*.35>t.retained)
       .sort((a,b)=>b.territory.troops-a.territory.troops);
     const donor=donors[0]?.territory;

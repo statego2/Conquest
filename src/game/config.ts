@@ -1,20 +1,22 @@
 import type { FactionId, Terrain } from './types';
 
-export const MAP_COLS = 21;
-export const MAP_ROWS = 7;
+// A wide living continent with coastlines, room for fronts and future expansion.
+export const MAP_COLS = 33;
+export const MAP_ROWS = 19;
 export const HEX_RADIUS = 35;
 export const WORLD_WIDTH = Math.sqrt(3) * HEX_RADIUS * (MAP_COLS + 0.5) + 80;
 export const WORLD_HEIGHT = HEX_RADIUS * (MAP_ROWS * 1.5 + 0.5) + 80;
 
 export const FACTIONS: Record<FactionId, { name: string; color: string; col: number; row: number }> = {
-  player: { name: 'THE FREE CITIES', color: '#71d9d0', col: 2, row: 3 },
-  amber: { name: 'SOLAR DOMINION', color: '#e3b25d', col: 17, row: 1 },
-  coral: { name: 'CRIMSON ORDER', color: '#ee697a', col: 17, row: 5 },
-  violet: { name: 'THE ASCENDANCY', color: '#a797f0', col: 10, row: 0 },
-  moss: { name: 'VERDANT PACT', color: '#b0c27b', col: 10, row: 6 },
+  player: { name: 'THE FREE CITIES', color: '#71d9d0', col: 4, row: 9 },
+  amber: { name: 'SOLAR DOMINION', color: '#e3b25d', col: 28, row: 5 },
+  coral: { name: 'CRIMSON ORDER', color: '#ee697a', col: 28, row: 13 },
+  violet: { name: 'THE ASCENDANCY', color: '#a797f0', col: 16, row: 2 },
+  moss: { name: 'VERDANT PACT', color: '#b0c27b', col: 16, row: 16 },
 };
 
 export const TERRAINS: Record<Terrain, { defense: number; production: number; name: string }> = {
+  sea: { defense: 999, production: 0, name: 'Open water' },
   plain: { defense: 1, production: 0.9, name: 'Lowlands' },
   fertile: { defense: 1, production: 1.35, name: 'Heartlands' },
   highland: { defense: 1.3, production: 0.65, name: 'Highlands' },

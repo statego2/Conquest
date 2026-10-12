@@ -1,19 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, hexNeighbours, seededRandom } from '../src/game/world';
+import { createGame, hexNeighbours, seededRandom, isLandCell } from '../src/game/world';
 import { canRevolt, launchRevolt, mobilizeReserves, resolveBattle, sendArmy, tick } from '../src/game/simulation';
+import { MAP_COLS, MAP_ROWS } from '../src/game/config';
 import { leaderboard } from '../src/game/metrics';
 
 describe('Deterministic world', () => {
-  it('generates 147 sectors and five permanent homelands', () => {
+  it('generates an irregular continental war theatre and five permanent homelands', () => {
     const a=createGame(99),b=createGame(99);
-    expect(a).toEqual(b);expect(a.territories).toHaveLength(147);
+    expect(a).toEqual(b);expect(a.territories).toHaveLength(MAP_COLS*MAP_ROWS);
+    expect(a.territories.filter(t=>t.terrain!=='sea').length).toBeGreaterThan(350);
+    expect(a.territories.filter(t=>t.terrain==='sea').length).toBeGreaterThan(100);
+    expect(a.territories.every(t=>isLandCell(t.col,t.row)===(t.terrain!=='sea'))).toBe(true);
     expect(a.territories.filter(t=>t.capitalOf)).toHaveLength(5);
   });
   it('keeps all hex neighbor links symmetric and bounded',()=>{
     const world=createGame();
     for(const t of world.territories){
       expect(hexNeighbours(t.col,t.row)).toEqual(t.neighbours);
-      expect(t.neighbours.length).toBeGreaterThan(1);
+      if(t.terrain==='sea')expect(t.neighbours).toHaveLength(0);
+      else expect(t.neighbours.length).toBeGreaterThan(0);
       for(const n of t.neighbours)expect(world.territories[n].neighbours).toContain(t.id);
     }
   });

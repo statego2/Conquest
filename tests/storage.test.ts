@@ -1,7 +1,7 @@
 import { afterEach,describe,expect,it,vi } from 'vitest';
-import { createGame } from '../src/game/world';
+import { createGame, territoryId } from '../src/game/world';
 import { clearGame,loadGame,saveGame } from '../src/game/storage';
-import { sendArmy,sendSupport } from '../src/game/simulation';
+import { sendSupport } from '../src/game/simulation';
 import { MANPOWER_CAP } from '../src/game/config';
 
 function memoryStorage(){
@@ -36,27 +36,41 @@ describe('Durable world persistence',()=>{
     expect(loaded?.territories[from].capitalOf).toBe('player');
     expect(JSON.stringify(loaded)).toBe(before);
   });
-  it('migrates a v2 save without deleting a conquered world or its armies',()=>{
+  it('transplants legacy 147-region wars with cities, troop counts and marches into new continent',()=>{
     const {store}=memoryStorage();
     const game=createGame(1234);
-    const from=game.factions.player.capital,enemy=game.factions.amber.capital;
-    game.territories[from].owner='amber';
-    game.territories[enemy].owner='player';
-    const to=game.territories[enemy].neighbours[0];
-    sendArmy(game,enemy,to,.65);
-    game.paused=true;game.speed=2;
+    const mapped=(col:number,row:number)=>territoryId(col+6,row+6);
+    const oldRegions=Array.from({length:147},(_,id)=>{
+      const col=id%21,row=Math.floor(id/21);
+      const t=game.territories[mapped(col,row)];
+      return {...t,id,col,row,owner:null,capitalOf:null,neighbours:[],manpower:undefined};
+    });
     const legacy=JSON.parse(JSON.stringify(game));
-    for(const t of legacy.territories)delete t.manpower;
+    legacy.territories=oldRegions;
+    const capitals={player:65,amber:38,coral:122,violet:10,moss:136};
+    for(const [faction,capital] of Object.entries(capitals)){
+      legacy.factions[faction].capital=capital;
+      legacy.territories[capital].capitalOf=faction;
+      legacy.territories[capital].terrain='citadel';
+      legacy.territories[capital].owner=faction;
+    }
+    legacy.territories[65].owner='amber';
+    legacy.territories[38].owner='player';
+    legacy.territories[38].troops=412;
+    legacy.factions.player.reserves=121;
+    legacy.marches=[{id:3,from:38,to:39,owner:'player',troops:40,duration:.95,elapsed:.1,route:[38,39]}];
+    legacy.time=874;
     store.setItem('conquest-dark-strategist-v2',JSON.stringify({version:2,state:legacy}));
     const migrated=loadGame()!;
-    expect(migrated).not.toBeNull();
-    expect(migrated.territories[from].owner).toBe('amber');
-    expect(migrated.territories[enemy].owner).toBe('player');
-    expect(migrated.territories[enemy].capitalOf).toBe('amber');
-    expect(migrated.marches.length).toBe(game.marches.length);
-    expect(migrated.territories.every(t=>t.manpower===MANPOWER_CAP*.7)).toBe(true);
-    expect(migrated.paused).toBe(false);
-    expect(migrated.speed).toBe(1);
+    expect(migrated.territories.length).toBe(33*19);
+    expect(migrated.territories[mapped(65%21,Math.floor(65/21))].owner).toBe('amber');
+    expect(migrated.territories[mapped(38%21,Math.floor(38/21))].owner).toBe('player');
+    expect(migrated.territories[mapped(38%21,Math.floor(38/21))].troops).toBe(412);
+    expect(migrated.marches[0].from).toBe(mapped(38%21,Math.floor(38/21)));
+    expect(migrated.factions.player.capital).toBe(mapped(65%21,Math.floor(65/21)));
+    expect(migrated.factions.player.reserves).toBe(121);
+    expect(migrated.time).toBe(874);
+    expect(migrated.territories.every(t=>t.manpower>=0 && t.manpower<=MANPOWER_CAP)).toBe(true);
   });
   it('clears a world only through explicit clearing and rejects malformed input',()=>{
     const {store}=memoryStorage();

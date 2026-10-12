@@ -70,21 +70,21 @@ export class HUD {
     const myLand=ownedTerritories(state,'player');
     this.commitmentButton.textContent='SEND '+Math.round(commitment*100)+'%';
     this.viewLabel.textContent=actual==='tactical'?'TACTICAL / MICRO BATTLE'
-      :actual==='operational'?'OPERATIONAL / REGIONAL FRONT':'WORLD COMMAND / TAP A REGION TO ZOOM IN';
+      :actual==='operational'?'OPERATIONAL / REGIONAL FRONT':'WORLD COMMAND / SELECT ARMY → ATTACK FRONT';
     this.deck.classList.toggle('is-strategic',actual==='strategic');
     this.mapHint.classList.toggle('is-strategic',actual==='strategic');
-    this.mapHint.textContent=actual==='strategic'?'TAP ANY REGION TO ZOOM INTO BATTLE':
+    this.mapHint.textContent=actual==='strategic'?'SELECT YOUR ARMY • TAP ENEMY FRONT TO ATTACK':
       'TAP YOUR REGION, THEN A NEIGHBOUR TO ATTACK';
     this.viewButtons.forEach(button=>{
       button.classList.toggle('active',button.dataset.view===preference);
       button.setAttribute('aria-pressed',String(button.dataset.view===preference));
     });
-    this.land.textContent=`${myLand.length}/${state.territories.length}`;
+    this.land.textContent=`${myLand.length}/${state.territories.filter(t=>t.terrain!=='sea').length}`;
     this.army.textContent=totalTroops(state,'player').toLocaleString();
     this.reserves.textContent=String(Math.floor(state.factions.player.reserves));
     this.clock.textContent=formatClock(state.time);
     const occupied=state.territories[state.factions.player.capital].owner!=='player';
-    this.status.textContent=myLand.length===state.territories.length?'GLOBAL DOMINION / WORLD CONTINUES':occupied?'HOMELAND OCCUPIED / RESISTANCE ACTIVE':'HOMELAND SECURE / EXPAND WEST TO EAST';
+    this.status.textContent=myLand.length===state.territories.filter(t=>t.terrain!=='sea').length?'GLOBAL DOMINION / WORLD CONTINUES':occupied?'HOMELAND OCCUPIED / RESISTANCE ACTIVE':'HOMELAND SECURE / EXPAND WEST TO EAST';
     this.status.classList.toggle('danger',occupied);
     this.pause.textContent=state.paused?'RESUME':'PAUSE';this.speed.textContent=`${state.speed}×`;
     this.support.disabled=selected===null||state.territories[selected].owner!=='player'||state.territories[selected].troops<3;

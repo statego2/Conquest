@@ -24,11 +24,18 @@ test('landscape tactical map loads and supports all three command scales',async(
   await expect(page.locator('#view-label')).toContainText('WORLD COMMAND');
   await page.screenshot({path:testInfo.outputPath('world-landscape.png')});
   await expect(page.locator('#command-deck')).toHaveClass(/is-strategic/);
-  // The initial player's heartland lies at this coordinate in the seeded
-  // world-scale overview. Tapping the world should return to tactical command.
+  // WORLD is now a real command mode, not a forced zoom-in.
+  // Tapping a region should keep strategic mode and the army-order deck alive.
   await page.locator('#world').click({position:{x:290,y:160}});
-  await expect(page.locator('#view-label')).toContainText('TACTICAL');
-  await expect(page.locator('#command-deck')).not.toHaveClass(/is-strategic/);
+  await expect(page.locator('#view-label')).toContainText('WORLD COMMAND');
+  await expect(page.locator('#command-deck')).toHaveClass(/is-strategic/);
+  await expect(page.locator('#commitment')).toBeVisible();
+  await page.locator('#commitment').click();
+  await expect(page.locator('#commitment')).toContainText('90%');
+  await page.locator('#commitment').click();
+  await expect(page.locator('#commitment')).toContainText('35%');
+  await page.locator('#commitment').click();
+  await expect(page.locator('#commitment')).toContainText('65%');
 
   await page.locator('#view-tactical').click();
   await expect(page.locator('#view-label')).toContainText('TACTICAL');
