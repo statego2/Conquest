@@ -120,10 +120,10 @@ export class WorldRenderer {
   }
   onEvents(events: GameEvent[], state: GameState): void {
     for (const e of events) {
-      if (e.type === 'defense') continue;
       const c = hexCenter(state.territories[e.territory]);
-      this.bursts.push({ x:c.x, y:c.y, life:1.15, color:FACTIONS[e.owner].color,
-        text:e.type === 'revolt' ? 'UPRISING' : e.type === 'mobilize' ? 'REINFORCED' : 'CONQUERED' });
+      this.bursts.push({ x:c.x, y:c.y, life:e.type==='defense'?.65:1.15,
+        color:e.type==='defense'?'#e58578':FACTIONS[e.owner].color,
+        text:e.type==='defense'?'REPELLED':e.type === 'revolt' ? 'UPRISING' : e.type === 'mobilize' ? 'REINFORCED' : 'CONQUERED' });
     }
     if (this.bursts.length > 24) this.bursts.splice(0,this.bursts.length-24);
   }
@@ -152,6 +152,9 @@ export class WorldRenderer {
       targets.splice(0,targets.length,...queue.slice(1));
     }
     for(const t of state.territories){
+      const p=hexCenter(t),sx=p.x*this.scale+this.offsetX,sy=p.y*this.scale+this.offsetY;
+      const margin=HEX_RADIUS*this.scale+28;
+      if(sx< -margin || sx>this.width+margin || sy< -margin || sy>this.height+margin)continue;
       const frontier=t.neighbours.some(n=>state.territories[n].owner!==t.owner);
       this.drawHex(t,t.id===selected,t.id===this.hover,targets.includes(t.id),frontier,state.time,macro,operational);
     }
