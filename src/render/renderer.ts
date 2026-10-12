@@ -109,8 +109,9 @@ export class WorldRenderer {
     const margin = 40;
     if (WORLD_WIDTH * this.scale <= this.width) this.offsetX = (this.width - WORLD_WIDTH * this.scale) / 2;
     else this.offsetX = Math.max(this.width - WORLD_WIDTH * this.scale - margin, Math.min(margin, this.offsetX));
-    if (WORLD_HEIGHT * this.scale <= this.height) this.offsetY = (this.height - WORLD_HEIGHT * this.scale) / 2;
-    else this.offsetY = Math.max(this.height - WORLD_HEIGHT * this.scale - margin, Math.min(margin, this.offsetY));
+    const visibleHeight=this.viewMode==='strategic'?Math.max(160,this.height-66):this.height;
+    if (WORLD_HEIGHT * this.scale <= visibleHeight) this.offsetY = (visibleHeight - WORLD_HEIGHT * this.scale) / 2;
+    else this.offsetY = Math.max(visibleHeight - WORLD_HEIGHT * this.scale - margin, Math.min(margin, this.offsetY));
   }
   pick(state: GameState, screenX: number, screenY: number): number | null {
     if(this.viewMode==='strategic') {
@@ -310,10 +311,10 @@ export class WorldRenderer {
       c.save();c.textAlign='center';c.textBaseline='middle';
       c.shadowColor='#071014';c.shadowBlur=13;
       c.fillStyle='#f1efe2';c.font='800 '+Math.max(25,14/this.scale)+'px Barlow Condensed,system-ui';
-      c.fillText(faction.name, cx, cy-30, 230);
+      c.fillText(faction.name, cx, cy-126, 230);
       c.font='700 '+Math.max(19,11/this.scale)+'px Barlow Condensed,system-ui';
       c.fillStyle=FACTIONS[faction.id].color;
-      c.fillText(owned.length+' TERRITORIES',cx,cy-7,220);
+      c.fillText(owned.length+' REGIONS',cx,cy-101,220);
       c.restore();
     }
   }
@@ -414,7 +415,7 @@ export class WorldRenderer {
     const color=t.owner?FACTIONS[t.owner].color:'#53686b';
     c.fillStyle=t.owner
       ? blend(t.terrain==='fertile'?'#25372f':'#1a302e',color,macro?.66:operational?.58:.38)
-      : t.terrain==='fertile'?'#334537':t.terrain==='highland'?'#414946':'#293a35';
+      : macro?'#2b4138':t.terrain==='fertile'?'#334537':t.terrain==='highland'?'#414946':'#293a35';
     if(selected||hovered){c.shadowColor=selected?'#65ecdf':color;c.shadowBlur=7;}
     c.fill();c.shadowBlur=0;
     if(!macro&&!operational)this.drawTacticalSurface(t,p);
