@@ -61,3 +61,15 @@ test('portrait phone has a visible canvas and accessible battle actions',async({
   expect(order.x+order.width).toBeLessThanOrEqual(391);
   await page.screenshot({path:testInfo.outputPath('portrait-controls.png')});
 });
+
+test('WORLD map dispatches a real assault without forcing MICRO zoom',async({page})=>{
+  await page.goto('/');
+  await expect(page.locator('#view-label')).toContainText('TACTICAL');
+  await page.locator('#view-strategic').click();
+  await expect(page.locator('#view-label')).toContainText('WORLD COMMAND');
+  // Seed 24102. From capital (4,9), this hits adjacent neutral sector (4,10).
+  // Coordinates are relative to an 844 x 390 landscape phone viewport.
+  await page.locator('#world').click({position:{x:235,y:155}});
+  await expect(page.locator('#toast')).toContainText('OFFENSIVE DISPATCHED',{timeout:5000});
+  await expect(page.locator('#view-label')).toContainText('WORLD COMMAND');
+});
