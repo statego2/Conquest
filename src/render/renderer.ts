@@ -178,6 +178,7 @@ export class WorldRenderer {
       const frontier=t.neighbours.some(n=>state.territories[n].owner!==t.owner);
       this.drawHex(t,t.id===selected,t.id===this.hover,targets.includes(t.id),frontier,state.time,macro,operational);
     }
+    this.drawHydrology();
     this.drawCoastalOutline(state);
     // Macro focus: continuous geopolitical borders and frontier concentrations.
     if (macro || operational) this.drawPoliticalBorders(state,macro);
@@ -208,6 +209,39 @@ export class WorldRenderer {
       c.globalAlpha=1;
     }
     c.setTransform(this.dpr,0,0,this.dpr,0,0);
+  }
+  /**
+   * Natural rivers exist across several logical regions, not inside a single
+   * board tile. They are rendered in global geographic coordinates and end at
+   * shorelines, emphasizing that the terrain is continuous beneath ownership.
+   */
+  private drawHydrology():void{
+    const c=this.ctx;
+    const dx=Math.sqrt(3)*HEX_RADIUS;
+    c.save();
+    c.strokeStyle=this.viewMode==='strategic'?'#679ba080':'#6eaeb7a2';
+    c.lineWidth=this.viewMode==='strategic'?4:2.8;
+    c.lineCap='round';c.lineJoin='round';
+    for(let river=0;river<4;river++){
+      let active=false;
+      for(let y=75;y<WORLD_HEIGHT-40;y+=9){
+        const base=[.19,.37,.63,.78][river];
+        const x=WORLD_WIDTH*base+
+          Math.sin(y*.005+river*2.7)*57+
+          Math.sin(y*.013+river*1.4)*24;
+        const row=Math.round((y-44-HEX_RADIUS)/(1.5*HEX_RADIUS));
+        const col=Math.round((x-45-dx/2)/dx-(row%2)*.5);
+        if(!isLandCell(col,row)){
+          if(active)c.stroke();
+          active=false;
+          continue;
+        }
+        if(!active){c.beginPath();c.moveTo(x,y);active=true;}
+        else c.lineTo(x,y);
+      }
+      if(active)c.stroke();
+    }
+    c.restore();
   }
   /** A proper coastline separates land theatre from open water at every zoom. */
   private drawCoastalOutline(state:GameState):void {
@@ -305,7 +339,7 @@ export class WorldRenderer {
     const c=this.ctx;
     for(const faction of Object.values(state.factions)) {
       const owned=state.territories.filter(t=>t.owner===faction.id);
-      if(owned.length<3)continue;
+      if(owned.length<12)continue;
       const cx=owned.reduce((sum,t)=>sum+hexCenter(t).x,0)/owned.length;
       const cy=owned.reduce((sum,t)=>sum+hexCenter(t).y,0)/owned.length;
       c.save();c.textAlign='center';c.textBaseline='middle';
@@ -413,14 +447,16 @@ export class WorldRenderer {
     const c=this.ctx,p=hexCenter(t);
     tracePolygon(c,provinceOutline(t));
     const color=t.owner?FACTIONS[t.owner].color:'#53686b';
-    c.fillStyle=t.owner
-      ? blend(t.terrain==='fertile'?'#25372f':'#1a302e',color,macro?.66:operational?.58:.38)
-      : macro?'#2b4138':t.terrain==='fertile'?'#334537':t.terrain==='highland'?'#414946':'#293a35';
+    const earth=macro?'#2a4035':t.terrain==='highland'?'#33443d':
+      t.terrain==='fertile'?'#2e4437':t.terrain==='citadel'?'#35473e':'#2d4239';
+    // Geography is one contiguous landscape. Political ownership is a subdued
+    // tint on top, NOT the saturated color of every hexagon.
+    c.fillStyle=t.owner?blend(earth,color,macro?.46:operational?.31:.25):earth;
     if(selected||hovered){c.shadowColor=selected?'#65ecdf':color;c.shadowBlur=7;}
     c.fill();c.shadowBlur=0;
     if(!macro&&!operational)this.drawTacticalSurface(t,p);
     c.strokeStyle=selected?'#fff2cd':hovered?'#ffffff':inReach?'#d1c299b0':
-      frontier?color+'b9':macro?'#00000000':'#ffffff17';
+      frontier?color+'b9':'#ffffff08';
     c.lineWidth=selected?2.8:inReach?1.5:frontier?1.4:.8;c.stroke();
     if(t.terrain==='highland'){c.strokeStyle='#8aa2b177';c.lineWidth=1;
       c.beginPath();c.moveTo(p.x-17,p.y-15);c.lineTo(p.x-10,p.y-23);c.lineTo(p.x-3,p.y-15);c.stroke();}
