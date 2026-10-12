@@ -9,8 +9,8 @@ export type ViewMode = 'tactical' | 'operational' | 'strategic';
 export type ViewPreference = ViewMode | 'auto';
 
 export function automaticView(owned: number): ViewMode {
-  if (owned >= 28) return 'strategic';
-  if (owned >= 8) return 'operational';
+  if (owned >= 38) return 'strategic';
+  if (owned >= 11) return 'operational';
   return 'tactical';
 }
 
@@ -22,9 +22,9 @@ export function resolveView(preference: ViewPreference, owned: number): ViewMode
 export function scaleForView(mode: ViewMode, width: number, height: number): number {
   const w = Math.max(180, width), h = Math.max(160, height);
   const fit = Math.min((w - 24) / WORLD_WIDTH, (h - 24) / WORLD_HEIGHT);
-  if (mode === 'strategic') return Math.max(0.18, Math.min(2.2, fit));
-  if (mode === 'operational') return Math.max(0.67, Math.min(1.2, Math.max(fit * 1.55, 0.88)));
-  return Math.max(1.28, Math.min(1.85, Math.max(fit * 2.8, 1.42)));
+  if (mode === 'strategic') return Math.max(0.13, Math.min(2.2, fit));
+  if (mode === 'operational') return Math.max(0.43, Math.min(1.2, Math.max(fit * 2.1, 0.58)));
+  return Math.max(1.24, Math.min(1.95, Math.max(fit * 4.2, 1.48)));
 }
 
 /** No camera logic is allowed to alter actual ownership or troop simulation. */
