@@ -1,8 +1,5 @@
 name: Diagnose live GitHub Pages
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -38,24 +35,3 @@ jobs:
               -w 'HTTP:%{http_code} URL:%{url_effective}\n' "$url" || true
           done
 
-  repair:
-    runs-on: ubuntu-latest
-    timeout-minutes: 4
-    permissions:
-      contents: read
-      pages: write
-    steps:
-      - name: Try switching the Pages serving mode to workflow
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          echo 'BEFORE:'
-          gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type,source,html_url}'
-          echo 'UPDATE:'
-          if gh api --method PUT "repos/${GITHUB_REPOSITORY}/pages" -f build_type=workflow; then
-            echo 'UPDATE_OK=true'
-          else
-            echo 'UPDATE_OK=false (workflow token may lack administration permission)'
-          fi
-          echo 'AFTER:'
-          gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type,source,html_url}'
