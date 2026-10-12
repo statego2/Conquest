@@ -1,4 +1,7 @@
 # CONQUEST — DARK STRATEGIST
+
+> **STATUS UPDATE 2026-10-13:** Current technical snapshot below describes the prior 377-sector alpha only. The **new official design authority** is [docs/redesign/00_DIRECTION_LOCK.md](redesign/00_DIRECTION_LOCK.md) plus the gameplay, art and execution documents in `docs/redesign/`. Camera MICRO/REGIONS/WORLD in the alpha must not be represented as the genuine three-tier command/sovereignty game. New priority: playable polished MICRO-first vertical slice. The legacy build must be preserved, and vNext is not yet implemented.
+
 ## Development continuity / source of truth
 Updated: 2026-10-12
 
