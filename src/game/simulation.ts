@@ -1,5 +1,6 @@
 import { HOMELAND_UPRISING_BONUS, MANPOWER_CAP, MANPOWER_RECOVERY, MAX_TROOPS, MARCH_SECONDS, RESERVE_CAP, REVOLT_COOLDOWN, REVOLT_MIN_RESERVES, SOFT_CAP_PRODUCTION_FACTOR, TERRAINS, TROOP_SOFT_CAP } from './config';
 import type { FactionId, GameState, Territory } from './types';
+import { committedTroops, uprisingCommitment, type Commitment } from './tactics';
 
 export function ownedTerritories(state: GameState, faction: FactionId): Territory[] {
   return state.territories.filter((territory) => territory.owner === faction);
@@ -13,7 +14,7 @@ export function sendArmy(state: GameState, from: number, to: number, fraction = 
   const source = state.territories[from];
   const target = state.territories[to];
   if (!source || !target || !source.owner || !isNeighbour(state, from, to)) return false;
-  const troops = Math.max(0, Math.min(source.troops - 1, Math.floor(source.troops * fraction)));
+  const troops = committedTroops(source.troops,fraction);
   if (troops < 2) return false;
   source.troops -= troops;
   state.marches.push({
@@ -49,7 +50,7 @@ export function sendSupport(state: GameState, from: number, to: number, fraction
   const route = friendlyRoute(state, from, to);
   if (!route) return false;
   const source = state.territories[from];
-  const troops = Math.min(Math.max(0, Math.floor(source.troops) - 1), Math.floor(source.troops * fraction));
+  const troops = committedTroops(source.troops,fraction);
   if (troops < 2) return false;
   source.troops -= troops;
   state.marches.push({
@@ -90,11 +91,12 @@ export function canRevolt(state: GameState, factionId: FactionId): boolean {
     faction.reserves >= REVOLT_MIN_RESERVES && faction.revoltCooldown <= 0;
 }
 
-export function launchRevolt(state: GameState, factionId: FactionId): boolean {
+export function launchRevolt(state: GameState, factionId: FactionId, commitment: Commitment | 1 = 1): boolean {
   if (!canRevolt(state, factionId)) return false;
   const faction = state.factions[factionId];
-  const force = Math.floor(faction.reserves);
-  faction.reserves = 0;
+  const force = uprisingCommitment(faction.reserves,commitment);
+  if(force<REVOLT_MIN_RESERVES)return false;
+  faction.reserves -= force;
   faction.revoltCooldown = REVOLT_COOLDOWN;
   resolveBattle(state, factionId, faction.capital, force, true);
   state.events.push({ type: 'revolt', territory: faction.capital, owner: factionId, message: `${faction.name}: HOMELAND UPRISING!` });
