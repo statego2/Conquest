@@ -58,3 +58,7 @@ Before adding a mechanic: define the player decision it creates, test it, add me
 ## Existing art system
 
 The independent **Dark Strategist** SVG art library, [art direction](docs/ART_DIRECTION.md), [asset pipeline](docs/ASSET_PIPELINE.md), and [interactive gallery](art-preview.html) from the first art milestone are retained intact. The runnable prototype uses lightweight Canvas rendering today; follow [gameplay art integration notes](docs/ART_DIRECTION_GAMEPLAY.md) when replacing primitives with provided SVG assets.
+
+### Static mobile-ready playtest
+
+The dependency-free ES module build is checked in to [`play/`](play/) and mirrored in [`public/play/`](public/play/) so the [playtest page](https://statego2.github.io/Conquest/play/) works whether GitHub Pages serves the source branch or the Vite production artifact. Source code remains TypeScript under `src/`. Regenerate these generated JS modules after changing game logic; do not hand-edit them.
