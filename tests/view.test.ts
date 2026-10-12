@@ -6,9 +6,11 @@ describe('Three levels of command', () => {
   it('begins on a tactical battlefield and scales with the player empire', () => {
     expect(automaticView(1)).toBe('tactical');
     expect(automaticView(7)).toBe('tactical');
-    expect(automaticView(8)).toBe('operational');
+    expect(automaticView(8)).toBe('tactical');
+    expect(automaticView(11)).toBe('operational');
     expect(automaticView(27)).toBe('operational');
-    expect(automaticView(28)).toBe('strategic');
+    expect(automaticView(28)).toBe('operational');
+    expect(automaticView(38)).toBe('strategic');
     expect(automaticView(147)).toBe('strategic');
   });
   it('manual view preferences always outrank auto zoom', () => {
