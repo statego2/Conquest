@@ -1,6 +1,3 @@
-.command-deck{transition:opacity .18s ease,transform .2s ease}
-.command-deck.is-strategic{opacity:0;transform:translateY(110%);pointer-events:none}
-@media(prefers-reduced-motion:reduce){.command-deck{transition:none}}
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
 :root{font-family:'DM Sans',system-ui,sans-serif;color:#e9e9e3;background:#060b0f;font-synthesis:none;-webkit-font-smoothing:antialiased}
 *{box-sizing:border-box}
@@ -91,3 +88,7 @@ button:not(:disabled):active{transform:translateY(1px)}
 @media(max-width:530px) and (orientation:portrait){.status-rail{height:62px;flex-wrap:wrap;align-content:center;row-gap:4px}.identity{gap:6px}.identity-mark{width:26px;height:26px;font-size:17px}.identity-name strong{font-size:18px}.identity-name small{font-size:6px}.overview{order:3;width:100%;justify-content:space-around;margin:0;gap:4px}.overview-cell{flex-direction:row;gap:5px;align-items:baseline}.overview-cell span{font-size:7px;letter-spacing:.06em}.overview-cell strong{font-size:13px}.overview-clock{display:none}.rail-actions{margin-left:auto}.rail-actions button{font-size:9px;padding:5px}.stage-head{top:9px}.map-hint{bottom:114px;max-width:90%;line-height:1.5}.command-deck{min-height:98px}.selected-module{padding:10px}.command-actions{width:112px}.command-actions button{min-width:0;white-space:normal;line-height:1.1}}
 @media(max-height:475px) and (orientation:landscape){.status-rail{height:43px;padding:0 12px}.identity-mark{width:25px;height:25px;font-size:18px}.identity-name strong{font-size:20px}.identity-name small{font-size:7px}.overview-cell strong{font-size:16px}.overview-cell span{font-size:7px}.rail-actions button{padding:5px 7px}.stage-head{top:9px}.rankings{display:none}.map-tools{top:9px}.map-hint{bottom:75px;font-size:8px}.command-deck{min-height:63px;max-width:800px;bottom:max(5px,env(safe-area-inset-bottom))}.selected-module{padding:6px 12px}.sector-heading{margin:2px 0 2px}.sector-heading strong{font-size:15px}.command-actions{flex-direction:row}.command-actions button{min-width:100px;padding:5px 9px;font-size:12px}.new-game{display:none}}
 @media(prefers-reduced-motion:reduce){.toast{transition:none}}
+
+.command-deck{transition:opacity .18s ease,transform .2s ease}
+.command-deck.is-strategic{opacity:0;transform:translateY(110%);pointer-events:none}
+@media(prefers-reduced-motion:reduce){.command-deck{transition:none}}
