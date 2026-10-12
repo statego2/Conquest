@@ -168,5 +168,7 @@ export function tick(state: GameState, dt: number): void {
 }
 
 export function totalTroops(state: GameState, owner: FactionId): number {
-  return Math.round(state.territories.filter((t) => t.owner === owner).reduce((sum, t) => sum + t.troops, 0));
+  const stationed=state.territories.filter(t=>t.owner===owner).reduce((sum,t)=>sum+t.troops,0);
+  const marching=state.marches.filter(m=>m.owner===owner).reduce((sum,m)=>sum+m.troops,0);
+  return Math.round(stationed+marching);
 }
