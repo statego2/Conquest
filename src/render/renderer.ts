@@ -2,6 +2,7 @@ import { FACTIONS, HEX_RADIUS, MAP_COLS, WORLD_HEIGHT, WORLD_WIDTH } from '../ga
 import type { GameEvent, GameState, Territory } from '../game/types';
 import { scaleForView, type ViewMode } from '../game/view';
 import { isLandCell } from '../game/world';
+import { terrainRGB } from './terrain';
 
 interface Burst { x: number; y: number; life: number; color: string; text: string }
 export function hexCenter(t: Territory): { x: number; y: number } {
@@ -58,6 +59,9 @@ export class WorldRenderer {
   private bursts: Burst[] = [];
   public hover: number | null = null;
   private armyMarkers:{x:number;y:number;id:number}[]=[];
+  private terrainTexture:HTMLCanvasElement|null=null;
+  private terrainMask:Path2D|null=null;
+  private terrainSeed:number|null=null;
   public viewMode: ViewMode = 'tactical';
   private viewFocus: {x:number;y:number}={x:265,y:230};
   constructor(private readonly canvas: HTMLCanvasElement) {
@@ -147,6 +151,36 @@ export class WorldRenderer {
     }
     return null;
   }
+  /**
+   * One lightweight raster for terrain height, vegetation and geology.
+   * Paint once per seeded world, never on every animation frame.
+   */
+  private prepareTerrain(state:GameState):void{
+    if(this.terrainSeed===state.seed && this.terrainTexture && this.terrainMask)return;
+    const texture=document.createElement('canvas');
+    texture.width=720;texture.height=374;
+    const ctx=texture.getContext('2d');
+    if(!ctx)throw new Error('Canvas2D terrain unavailable.');
+    const pixels=ctx.createImageData(texture.width,texture.height);
+    for(let py=0;py<texture.height;py++){
+      const y=(py+.5)*WORLD_HEIGHT/texture.height;
+      for(let px=0;px<texture.width;px++){
+        const x=(px+.5)*WORLD_WIDTH/texture.width;
+        const [r,g,b]=terrainRGB(state.seed,x,y);
+        const i=(py*texture.width+px)*4;
+        pixels.data[i]=r;pixels.data[i+1]=g;pixels.data[i+2]=b;pixels.data[i+3]=255;
+      }
+    }
+    ctx.putImageData(pixels,0,0);
+    const path=new Path2D();
+    for(const t of state.territories){
+      if(t.terrain==='sea')continue;
+      const outline=provinceOutline(t);
+      outline.forEach((p,i)=>i===0?path.moveTo(p.x,p.y):path.lineTo(p.x,p.y));
+      path.closePath();
+    }
+    this.terrainTexture=texture;this.terrainMask=path;this.terrainSeed=state.seed;
+  }
   onEvents(events: GameEvent[], state: GameState): void {
     for (const e of events) {
       const c = hexCenter(state.territories[e.territory]);
@@ -157,11 +191,19 @@ export class WorldRenderer {
     if (this.bursts.length > 24) this.bursts.splice(0,this.bursts.length-24);
   }
   render(state: GameState, selected: number | null, dt: number, supportMode = false): void {
+    this.prepareTerrain(state);
     const c = this.ctx;
     c.setTransform(this.dpr,0,0,this.dpr,0,0);
     c.clearRect(0,0,this.width,this.height);
     this.drawBackdrop(c);
     c.setTransform(this.dpr*this.scale,0,0,this.dpr*this.scale,this.offsetX*this.dpr,this.offsetY*this.dpr);
+    // A single natural landscape under the entire political map.
+    if(this.terrainTexture && this.terrainMask) {
+      c.save();
+      c.clip(this.terrainMask);
+      c.drawImage(this.terrainTexture,0,0,WORLD_WIDTH,WORLD_HEIGHT);
+      c.restore();
+    }
     c.strokeStyle = 'rgba(140,156,154,0.017)'; c.lineWidth=.6;
     for(let x=0;x<WORLD_WIDTH;x+=84){c.beginPath();c.moveTo(x,0);c.lineTo(x,WORLD_HEIGHT);c.stroke();}
     for(let y=0;y<WORLD_HEIGHT;y+=84){c.beginPath();c.moveTo(0,y);c.lineTo(WORLD_WIDTH,y);c.stroke();}
@@ -457,13 +499,12 @@ export class WorldRenderer {
     const c=this.ctx,p=hexCenter(t);
     tracePolygon(c,provinceOutline(t));
     const color=t.owner?FACTIONS[t.owner].color:'#53686b';
-    const earth=macro?'#2a4035':t.terrain==='highland'?'#33443d':
-      t.terrain==='fertile'?'#2e4437':t.terrain==='citadel'?'#35473e':'#2d4239';
-    // Geography is one contiguous landscape. Political ownership is a subdued
-    // tint on top, NOT the saturated color of every hexagon.
-    c.fillStyle=t.owner?blend(earth,color,macro?.46:operational?.31:.25):earth;
+    // Geography and elevation are a continuous raster. Logical provinces now
+    // contribute only transparent political influence, not opaque hex tiles.
+    c.fillStyle=t.owner?color:'#6a9780';
+    c.globalAlpha=t.owner?(macro?.35:operational?.29:.25):.055;
     if(selected||hovered){c.shadowColor=selected?'#65ecdf':color;c.shadowBlur=7;}
-    c.fill();c.shadowBlur=0;
+    c.fill();c.shadowBlur=0;c.globalAlpha=1;
     if(!macro&&!operational)this.drawTacticalSurface(t,p);
     c.strokeStyle=selected?'#fff2cd':hovered?'#ffffff':inReach?'#d1c299b0':
       frontier?color+'b9':'#ffffff08';
