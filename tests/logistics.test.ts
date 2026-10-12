@@ -84,3 +84,28 @@ describe('Sustainable world economics (Alpha 0.3)', () => {
     expect(game.time).toBeGreaterThan(0);
   });
 });
+
+describe('Field-army concentration above local recruitment cap',()=>{
+  it('conserves all incoming soldiers rather than silently deleting reinforcement overflow',()=>{
+    const game=createGame();
+    const [from,to]=[game.factions.player.capital,game.territories[game.factions.player.capital].neighbours.find(id=>game.territories[id].owner==='player')!];
+    game.territories[from].troops=200;
+    game.territories[to].troops=210;
+    const soldiersBefore=game.territories[from].troops+game.territories[to].troops;
+    expect(sendSupport(game,from,to,.9)).toBe(true);
+    for(let n=0;n<12;n++)tick(game,.1);
+    expect(game.territories[to].troops).toBeGreaterThan(MAX_TROOPS);
+    expect(game.territories[from].troops+game.territories[to].troops).toBeGreaterThanOrEqual(soldiersBefore);
+  });
+  it('can concentrate two regions to overwhelm a strongly defended citadel',()=>{
+    const game=createGame();
+    const from=game.factions.player.capital;
+    const ally=game.territories[from].neighbours.find(id=>game.territories[id].owner==='player')!;
+    game.territories[from].troops=200;
+    game.territories[ally].troops=190;
+    game.territories[ally].terrain='citadel';
+    expect(sendSupport(game,from,ally,.9)).toBe(true);
+    for(let n=0;n<12;n++)tick(game,.1);
+    expect(game.territories[ally].troops).toBeGreaterThan(340);
+  });
+});
