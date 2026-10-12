@@ -1,0 +1,37 @@
+name: Diagnose live GitHub Pages
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Inspect configured GitHub Pages site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo '=== Pages API metadata ==='
+          gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{status,build_type,html_url,cname,source,https_enforced}' || true
+          echo '=== Latest publish workflow executions ==='
+          gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/pages.yml/runs?per_page=12" \
+            --jq '.workflow_runs[] | {id,event,status,conclusion,head_sha,created_at,html_url}' || true
+      - name: Probe the public URL, headers, and root response
+        run: |
+          echo '=== Root ==='
+          curl -sSL --connect-timeout 10 --max-time 25 -D /tmp/conquest-headers \
+            -o /tmp/conquest-response \
+            -w 'HTTP:%{http_code} URL:%{url_effective} IP:%{remote_ip} SIZE:%{size_download}\n' \
+            https://statego2.github.io/Conquest/ || true
+          sed -n '1,28p' /tmp/conquest-headers || true
+          head -c 850 /tmp/conquest-response || true
+          echo
+          echo '=== Wrong-case and parent origin ==='
+          for url in https://statego2.github.io/ https://statego2.github.io/conquest/ ; do
+            curl -sSL --connect-timeout 10 --max-time 20 -o /dev/null \
+              -w 'HTTP:%{http_code} URL:%{url_effective}\n' "$url" || true
+          done
+
