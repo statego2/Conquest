@@ -1,4 +1,4 @@
-import { FACTIONS, HEX_RADIUS, WORLD_HEIGHT, WORLD_WIDTH } from '../game/config';
+import { FACTIONS, HEX_RADIUS, MAP_COLS, WORLD_HEIGHT, WORLD_WIDTH } from '../game/config';
 import type { GameEvent, GameState, Territory } from '../game/types';
 import { scaleForView, type ViewMode } from '../game/view';
 
@@ -241,6 +241,77 @@ export class WorldRenderer {
     shade.addColorStop(0,'#00000000');shade.addColorStop(1,'#00000083');
     c.fillStyle=shade;c.fillRect(0,0,this.width,this.height);
   }
+  /** Deterministic top-down surface detail; no images, random frame jitter or GPU dependencies. */
+  private drawTacticalSurface(t: Territory,p: Point):void {
+    const c=this.ctx;
+    c.save();
+    tracePolygon(c,provinceOutline(t));
+    c.clip();
+    // Civilian roads cross sector boundaries coherently for linked neighbour pairs.
+    c.strokeStyle=t.terrain==='highland'?'#80939a66':'#b8ac8761';
+    c.lineWidth=1.9;
+    for(const neighbour of t.neighbours){
+      if((t.id+neighbour)%3!==0)continue;
+      const regionX=45+Math.sqrt(3)*HEX_RADIUS*(neighbour%MAP_COLS+(Math.floor(neighbour/MAP_COLS)%2)*.5)+Math.sqrt(3)*HEX_RADIUS/2;
+      const regionY=44+HEX_RADIUS+Math.floor(neighbour/MAP_COLS)*HEX_RADIUS*1.5;
+      c.beginPath();c.moveTo(p.x,p.y);
+      c.quadraticCurveTo(p.x+(regionX-p.x)*.3,p.y+(regionY-p.y)*.45,
+        (p.x+regionX)*.5,(p.y+regionY)*.5);
+      c.stroke();
+    }
+    const seed=(t.id*13007+17)%997;
+    c.lineWidth=.9;
+    for(let j=0;j<3;j++){
+      const ox=((seed+j*47)%19)-9,oy=((seed*3+j*29)%23)-11;
+      c.strokeStyle=t.terrain==='highland'?'#b9c0a85c':t.terrain==='fertile'?'#6da99b55':'#7892973b';
+      c.beginPath();c.moveTo(p.x-30,p.y-18+j*14+oy*.3);
+      c.bezierCurveTo(p.x-11+ox*.2,p.y-30+j*14+oy,
+        p.x+15+ox*.3,p.y-2+j*14,p.x+35,p.y-12+j*14+oy*.25);
+      c.stroke();
+    }
+    // Small geographic features create the feeling of an overhead world.
+    if(t.terrain==='highland'){
+      c.strokeStyle='#bdc1b598';c.lineWidth=1.3;
+      for(let k=0;k<3;k++){
+        const x=p.x-19+k*15,y=p.y-19+(k%2)*5;
+        c.beginPath();c.moveTo(x-7,y+6);c.lineTo(x,y-6);c.lineTo(x+8,y+6);c.stroke();
+      }
+    }else if(t.terrain==='fertile'){
+      for(let k=0;k<7;k++){
+        const x=p.x-23+((seed+k*19)%46),y=p.y-22+((seed+k*13)%25);
+        c.fillStyle=k%2?'#658a70aa':'#839c76aa';
+        c.beginPath();c.arc(x,y,2.3,0,Math.PI*2);c.fill();
+        c.strokeStyle='#3b5e54aa';c.beginPath();c.moveTo(x,y);c.lineTo(x+1,y+4);c.stroke();
+      }
+    }else if(t.terrain==='citadel'){
+      c.strokeStyle='#d4bc8e98';c.lineWidth=1.6;
+      c.strokeRect(p.x-19,p.y-26,38,12);
+      c.fillStyle='#a3936a9a';
+      for(let k=0;k<4;k++)c.fillRect(p.x-17+k*10,p.y-25,6,5);
+    }else{
+      for(let k=0;k<4;k++){
+        const x=p.x-25+((seed+k*17)%48),y=p.y-25+((seed+k*11)%30);
+        c.fillStyle='#456b666e';c.fillRect(x,y,3,2);
+      }
+    }
+    c.restore();
+  }
+  /** Unit glyphs make nearby troop stacks read as battalions, not spreadsheet cells. */
+  private drawBattalion(t:Territory,p:Point,time:number):void{
+    const c=this.ctx,count=Math.min(7,Math.max(0,Math.ceil(Math.sqrt(t.troops)/2.5)));
+    if(!count)return;
+    c.save();
+    const team=t.owner?FACTIONS[t.owner].color:'#a2b2aa';
+    c.fillStyle=team;c.strokeStyle='#0d2026';c.lineWidth=.65;
+    const spacing=7.4,origin=p.x-(count-1)*spacing/2;
+    const bounce=Math.sin(time*1.4+t.id)*.65;
+    for(let k=0;k<count;k++){
+      const x=origin+k*spacing,y=p.y-10+(k%2)*2+bounce;
+      c.beginPath();c.moveTo(x,y-3.5);c.lineTo(x+3.1,y+2.3);
+      c.lineTo(x-3.1,y+2.3);c.closePath();c.fill();c.stroke();
+    }
+    c.restore();
+  }
   private drawHex(t: Territory,selected:boolean,hovered:boolean,inReach:boolean,frontier:boolean,time:number,macro=false,operational=false):void{
     const c=this.ctx,p=hexCenter(t);
     tracePolygon(c,provinceOutline(t));
@@ -248,6 +319,7 @@ export class WorldRenderer {
     c.fillStyle=t.owner?blend('#152532',color, macro ? 0.8 : operational ? 0.65 : t.capitalOf === t.owner ? 0.54 : 0.4):'#1b2a2b';
     if(selected||hovered){c.shadowColor=selected?'#65ecdf':color;c.shadowBlur=7;}
     c.fill();c.shadowBlur=0;
+    if(!macro&&!operational)this.drawTacticalSurface(t,p);
     c.strokeStyle=selected?'#fff2cd':hovered?'#ffffff':inReach?'#d1c299b0':frontier?color+'91':macro?'#00000000':'#ffffff10';
     c.lineWidth=selected?2.8:inReach?1.5:frontier?1.4:.8;c.stroke();
     if(t.terrain==='highland'){c.strokeStyle='#8aa2b177';c.lineWidth=1;
@@ -257,6 +329,7 @@ export class WorldRenderer {
       c.strokeStyle=home;c.lineWidth=1.8;c.beginPath();c.moveTo(p.x+13,p.y-10);c.lineTo(p.x+13,p.y-26);c.stroke();
       c.beginPath();c.moveTo(p.x+13,p.y-26);c.lineTo(p.x+27,p.y-22);c.lineTo(p.x+13,p.y-18);c.closePath();c.fillStyle=home;c.fill();
       c.strokeStyle=home+'88';c.lineWidth=1.3;c.beginPath();c.arc(p.x,p.y,24+Math.sin(time*1.8+t.id)*1.6,0,Math.PI*2);c.stroke();}
+    if(!macro&&!operational)this.drawBattalion(t,p,time);
     c.textAlign='center';c.textBaseline='middle';c.fillStyle=t.owner?'#f0fffc':'#b8c8cb';
     if(!macro && (!operational || selected || hovered || t.capitalOf || frontier)) {
       c.font='700 17px Barlow Condensed,system-ui';
