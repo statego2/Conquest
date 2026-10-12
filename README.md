@@ -1,14 +1,60 @@
-# CONQUEST
+# INFINITE CONQUEST
 
-**CONQUEST** is a strategy game about conquest, occupation, revolt, strategic patience, and reconquest.
+**Reign. Fall. Rise again.** A living-world, real-time territorial strategy game with persistent national resistance.
 
-## Visual identity: DARK STRATEGIST
-Not cheerful fantasy, not oversaturated mobile UI: a **war room at midnight**, on a cold atlas of contested provinces. Scarred iron, smoke-black slate, distressed parchment and dull brass frame the decisions. Faction colors are reserved for meaningful territorial ownership. **Political power is temporary; every captured region can become a threat again.**
+**Status:** Alpha 0.1 · browser-only, single-player. Steam, accounts, multiplayer and real online leaderboards are future milestones — not live features.
 
-## First art package
-- [Art direction bible](docs/ART_DIRECTION.md)
-- [Asset pipeline and inventory](docs/ASSET_PIPELINE.md)
-- [Art gallery and interactive map mockup](art-preview.html)
-- [Machine-readable manifest](public/assets/conquest/manifest.json)
+## Quick start
 
-This first pass includes source-native **SVG assets** (icons, army tokens, settlements, shields, terrain swatches, UI status markers and war-room background) that work directly as web image sources. The preview is a visual interaction prototype, **not a complete strategy engine**. All designs are original vectors with no external image/font dependencies.
+Requires **Node.js 20.19+**.
+
+```bash
+npm install
+npm run dev
+```
+
+Open the URL printed by Vite. Production build: `npm run build`. Tests: `npm test`.
+
+## Play
+
+- **Tap/click one of your teal territories**, then tap/click an adjacent **enemy** sector to send **65%** of its troops. On desktop hold **Shift** while attacking to send **90%**.
+- Troops regenerate automatically. Neutral areas start lightly defended; highlands and citadels have stronger defense.
+- Drag from a friendly sector onto an adjacent allied sector to reinforce it. Tap any friendly sector to select it.
+- **Deploy reserves** onto a selected friendly territory, or press **Raise the uprising** when your homeland is occupied and you have enough reserves.
+- Pan from empty/hostile parts of the map; zoom with scroll / `+` / `−`; pan by dragging the map; use the fit icon to recenter.
+- Space pauses, `R` fits the map, and 2× speed accelerates the simulation.
+- The world autosaves to this browser's local storage; **Start a New World** replaces the local game.
+
+### Non-negotiable design rule
+
+**No nation can be permanently eliminated.** A homeland retains its cultural flag, the reserve pool continues to replenish after conquest, and a faction can eventually revolt. **Every AI faction plays by the same resistance and combat rules.**
+
+## Project domains
+
+| Domain | Owner documents / code | Responsibility |
+|---|---|---|
+| Vision & philosophy | `docs/VISION.md` | Player fantasy, irreversibles, guiding principles |
+| Game design | `docs/GAME_DESIGN.md`, `docs/BALANCE.md` | Core loop, combat, feedback, design hypotheses |
+| Art & UX | `docs/ART_DIRECTION.md`, `src/render/`, `src/style.css` | World readability, motion, colors, sound |
+| Deterministic simulation | `src/game/` | Pure TS world state, battles, AI, resistance |
+| Browser experience | `src/main.ts`, `src/ui/` | Input, HUD, audio, local persistence |
+| Quality & delivery | `tests/`, `.github/workflows/` | Unit tests, type checks, production build, Pages workflow |
+| Online / Steam future | `docs/ROADMAP.md`, `docs/ARCHITECTURE.md` | Secure scores, server authority, packaging plan |
+
+## Design constraint
+
+For Alpha 0.1 **only armies**, territory, and an automatically growing resistance pool. No wood, gold, food, technology tree, diplomacy menus or base-builder micro-management. Complexity should emerge from geography, tempo, defense and the strategic option to return after defeat.
+
+## Production and deployment
+
+`npm run check` validates tests and creates the web build. `.github/workflows/pages.yml` is prepared to publish on pushes to `main` **once GitHub Pages is enabled in repository settings with Source = GitHub Actions**. The workflow does not provision Pages settings or guarantee a publicly accessible URL.
+
+The in-game **GLOBAL POWER INDEX** is an on-device live ranking of factions within the current simulation, **not** a global network leaderboard. Do not use untrusted client scores for the future Steam leaderboard; see `docs/ARCHITECTURE.md`.
+
+## Collaboration
+
+Before adding a mechanic: define the player decision it creates, test it, add measurable acceptance criteria, then implement it in `src/game/` with tests before polishing effects. Prefer one strong loop over many shallow features.
+
+## Existing art system
+
+The independent **Dark Strategist** SVG art library, [art direction](docs/ART_DIRECTION.md), [asset pipeline](docs/ASSET_PIPELINE.md), and [interactive gallery](art-preview.html) from the first art milestone are retained intact. The runnable prototype uses lightweight Canvas rendering today; follow [gameplay art integration notes](docs/ART_DIRECTION_GAMEPLAY.md) when replacing primitives with provided SVG assets.
