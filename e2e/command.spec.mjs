@@ -21,7 +21,7 @@ test('landscape tactical map loads and supports all three command scales',async(
   await page.screenshot({path:testInfo.outputPath('regional-landscape.png')});
 
   await page.locator('#view-strategic').click();
-  await expect(page.locator('#view-label')).toContainText('STRATEGIC');
+  await expect(page.locator('#view-label')).toContainText('WORLD COMMAND');
   await page.screenshot({path:testInfo.outputPath('world-landscape.png')});
   await expect(page.locator('#command-deck')).toHaveClass(/is-strategic/);
   // The initial player's heartland lies at this coordinate in the seeded
