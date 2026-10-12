@@ -1,5 +1,5 @@
 export type FactionId = 'player' | 'amber' | 'coral' | 'violet' | 'moss';
-export type Terrain = 'plain' | 'fertile' | 'highland' | 'citadel';
+export type Terrain = 'plain' | 'fertile' | 'highland' | 'citadel' | 'sea';
 
 export interface Territory {
   id: number;
