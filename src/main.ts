@@ -2,7 +2,7 @@ import './style.css';
 import { createGame } from './game/world';
 import { updateAI } from './game/ai';
 import { loadGame, saveGame, clearGame } from './game/storage';
-import { isNeighbour, launchRevolt, mobilizeReserves, sendArmy, sendSupport, tick } from './game/simulation';
+import { isNeighbour, launchRevolt, mobilizeReserves, sendArmy, sendOffensive, sendSupport, tick } from './game/simulation';
 import type { GameState } from './game/types';
 import { WorldRenderer } from './render/renderer';
 import { resolveView, type ViewPreference } from './game/view';
@@ -107,14 +107,9 @@ canvas.addEventListener('pointerup',(event)=>{
   }
   if(!pointer||event.pointerId!==pointer.id)return;
   const {x,y}=coordinates(event),picked=renderer.pick(game,x,y);
-  // Macro mode is for overview. Tapping any region drills straight into the
-  // tactical camera and restores context-sensitive command controls.
-  if(activeView==='strategic'&&!pointer.moved&&picked!==null&&!supportMode){
-    selected=picked;viewPreference='tactical';activeView='tactical';
-    renderer.setView('tactical',game,picked);
-    hud.message('TACTICAL COMMAND / SECTOR '+String(picked+1).padStart(3,'0'));
-    resetPointer();return;
-  }
+  // WORLD is now an actual command layer: tapping a friendly battalion
+  // selects its region; tapping a reachable enemy issues a routed offensive.
+  // No forced return to tactical mode.
   if(!pointer.panning && pointer.moved && pointer.from!==null && game.territories[pointer.from].owner==='player' && picked!==null && picked!==pointer.from && isNeighbour(game,pointer.from,picked)) {
     if(sendArmy(game,pointer.from,picked,event.shiftKey ? .9 : commitment)){
       hud.message(game.territories[picked].owner==='player'?'Reinforcements dispatched.':'Attack launched!');
@@ -132,8 +127,12 @@ canvas.addEventListener('pointerup',(event)=>{
       }else selected=picked;
     }else if(supportMode){
       hud.message('Support convoys can only target connected friendly territory.');
-    }else if(selected!==null&&game.territories[selected].owner==='player'&&isNeighbour(game,selected,picked)){
-      if(sendArmy(game,selected,picked,event.shiftKey ? .9 : commitment))hud.message('Attack launched!');
+    }else if(selected!==null&&game.territories[selected].owner==='player'){
+      const attack=activeView==='strategic'||activeView==='operational'
+        ?sendOffensive(game,selected,picked,event.shiftKey?.9:commitment)
+        :sendArmy(game,selected,picked,event.shiftKey?.9:commitment);
+      if(attack)hud.message(activeView==='strategic'?'WORLD COMMAND / OFFENSIVE DISPATCHED':'Attack launched!');
+      else hud.message('No connected frontline. Select another battalion.');
     }else hud.message('Select a friendly sector, then an adjacent target.');
   }
   resetPointer();
@@ -158,7 +157,7 @@ window.addEventListener('keydown',(event)=>{
   }
 });
 let lastFrame=performance.now(),lastUI=0,lastSave=0;
-let hadGlobalDominion=game.territories.every(t=>t.owner==='player');
+let hadGlobalDominion=game.territories.filter(t=>t.terrain!=='sea').every(t=>t.owner==='player');
 function frame(now:number):void{
   const dt=Math.min(.08,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
   tick(game,dt);
@@ -168,7 +167,7 @@ function frame(now:number):void{
     if(game.events.some(e=>e.owner==='player'&&e.type==='capture'))hud.message('SECTOR CAPTURED. KEEP ADVANCING.');
     else if(game.events.some(e=>e.type==='revolt'))hud.message('A NATION HAS RISEN AGAIN.');
   }
-  const dominant=game.territories.every(t=>t.owner==='player');
+  const dominant=game.territories.filter(t=>t.terrain!=='sea').every(t=>t.owner==='player');
   if(dominant && !hadGlobalDominion)hud.message('WORLD DOMINION. THE WAR NEVER ENDS.');
   hadGlobalDominion=dominant;
   syncView();
