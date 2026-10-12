@@ -69,6 +69,12 @@ button:not(:disabled):active{transform:translateY(1px)}
 .support-action{background:#12353b;color:#9beadf;border-color:#3b7b7c}
 .support-action.active{background:#b6ddca;color:#061b1f;border-color:#e8f5d8}
 .support-action:not(:disabled):hover{border-color:#adf5e3}
+.commitment-action{background:#243039;color:#ebcf95;border-color:#8f7955;font-variant-numeric:tabular-nums;min-width:95px!important}
+.commitment-action:hover{background:#3c4141;border-color:#efca83}
+.forecast{margin-top:7px;border-left:2px solid #a6bcb6;padding-left:7px;color:#b9c9cb;font:700 10px 'DM Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forecast.win{border-color:#81e5be;color:#87e8bf}
+.forecast.lose{border-color:#ef8684;color:#e7a2a2}
+@media(max-height:475px) and (orientation:landscape){.forecast{margin-top:2px;font-size:8px}.command-actions button.commitment-action{min-width:88px!important}}
 .deploy-action{background:#c8ad78;color:#151a18;border-color:#e0c48b}
 .deploy-action:not(:disabled):hover{background:#efd39c}
 .revolt-action{background:#401e29;color:#f3afb2;border-color:#704250}

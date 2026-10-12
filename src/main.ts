@@ -6,12 +6,14 @@ import { isNeighbour, launchRevolt, mobilizeReserves, sendArmy, sendSupport, tic
 import type { GameState } from './game/types';
 import { WorldRenderer } from './render/renderer';
 import { resolveView, type ViewPreference } from './game/view';
+import { nextCommitment, type Commitment } from './game/tactics';
 import { SoundFx } from './render/sound';
 import { HUD } from './ui/hud';
 
 let game:GameState=loadGame()??createGame();
 let selected:number|null=game.factions.player.capital;
 let supportMode=false;
+let commitment:Commitment=0.65;
 let viewPreference:ViewPreference='auto';
 let activeView=resolveView(viewPreference,game.territories.filter(t=>t.owner==='player').length);
 const syncView=(focus:number|null=null)=>{
@@ -23,10 +25,11 @@ const sound=new SoundFx();
 const root=document.querySelector<HTMLElement>('#app');
 if(!root)throw new Error('Missing #app root');
 const hud=new HUD(root,{
+  onCommitment:()=>{commitment=nextCommitment(commitment);hud.message('Force commitment: '+Math.round(commitment*100)+'%.');},
   onView:(mode)=>{viewPreference=mode;activeView=resolveView(mode,game.territories.filter(t=>t.owner==='player').length);renderer.setView(activeView,game,selected);},
   onSupport:()=>{supportMode=!supportMode;hud.message(supportMode?'Select a friendly destination for your convoy.':'Support order cancelled.');},
   onRevolt:()=>{
-    if(launchRevolt(game,'player')){
+    if(launchRevolt(game,'player',commitment)){
       renderer.onEvents(game.events,game);sound.playEvents(game.events);
       selected=game.factions.player.capital;hud.message('YOUR HOMELAND RISES AGAIN!');
     }else hud.message('Not enough resistance troops yet.');
@@ -105,7 +108,7 @@ canvas.addEventListener('pointerup',(event)=>{
   if(!pointer||event.pointerId!==pointer.id)return;
   const {x,y}=coordinates(event),picked=renderer.pick(game,x,y);
   if(!pointer.panning && pointer.moved && pointer.from!==null && game.territories[pointer.from].owner==='player' && picked!==null && picked!==pointer.from && isNeighbour(game,pointer.from,picked)) {
-    if(sendArmy(game,pointer.from,picked,event.shiftKey ? .9 : .65)){
+    if(sendArmy(game,pointer.from,picked,event.shiftKey ? .9 : commitment)){
       hud.message(game.territories[picked].owner==='player'?'Reinforcements dispatched.':'Attack launched!');
       selected=pointer.from;
     }
@@ -113,16 +116,16 @@ canvas.addEventListener('pointerup',(event)=>{
     const target=game.territories[picked];
     if(target.owner==='player'){
       if(supportMode && selected!==null && selected!==picked && game.territories[selected].owner==='player'){
-        const success=sendSupport(game,selected,picked,.65);
+        const success=sendSupport(game,selected,picked,commitment);
         hud.message(success?'Reinforcement convoy dispatched.':'No connected friendly corridor or enough troops.');
         if(success)supportMode=false;
       }else if(event.shiftKey && selected!==null && picked!==selected && isNeighbour(game,selected,picked) && game.territories[selected].owner==='player'){
-        sendArmy(game,selected,picked,.65);
+        sendArmy(game,selected,picked,commitment);
       }else selected=picked;
     }else if(supportMode){
       hud.message('Support convoys can only target connected friendly territory.');
     }else if(selected!==null&&game.territories[selected].owner==='player'&&isNeighbour(game,selected,picked)){
-      if(sendArmy(game,selected,picked,event.shiftKey ? .9 : .65))hud.message('Attack launched!');
+      if(sendArmy(game,selected,picked,event.shiftKey ? .9 : commitment))hud.message('Attack launched!');
     }else hud.message('Select a friendly sector, then an adjacent target.');
   }
   resetPointer();
@@ -158,7 +161,7 @@ function frame(now:number):void{
   }
   syncView();
   renderer.render(game,selected,dt,supportMode);
-  if(now-lastUI>170){hud.render(game,selected,supportMode,viewPreference,activeView);lastUI=now;}
+  if(now-lastUI>170){hud.render(game,selected,supportMode,viewPreference,activeView,commitment,renderer.hover);lastUI=now;}
   if(now-lastSave>10000){saveGame(game);lastSave=now;}
   requestAnimationFrame(frame);
 }
