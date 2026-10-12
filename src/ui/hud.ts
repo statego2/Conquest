@@ -1,4 +1,4 @@
-import { FACTIONS, REVOLT_MIN_RESERVES, TERRAINS } from '../game/config';
+import { FACTIONS, TERRAINS } from '../game/config';
 import { formatClock, leaderboard } from '../game/metrics';
 import { canRevolt, ownedTerritories } from '../game/simulation';
 import type { GameState } from '../game/types';
