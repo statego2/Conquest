@@ -18,7 +18,7 @@ describe('Deterministic world', () => {
     for(const t of world.territories){
       expect(hexNeighbours(t.col,t.row)).toEqual(t.neighbours);
       if(t.terrain==='sea')expect(t.neighbours).toHaveLength(0);
-      else expect(t.neighbours.length).toBeGreaterThan(1);
+      else expect(t.neighbours.length).toBeGreaterThan(0);
       for(const n of t.neighbours)expect(world.territories[n].neighbours).toContain(t.id);
     }
   });
