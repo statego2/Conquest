@@ -1,6 +1,7 @@
 import { FACTIONS, HEX_RADIUS, MAP_COLS, WORLD_HEIGHT, WORLD_WIDTH } from '../game/config';
 import type { GameEvent, GameState, Territory } from '../game/types';
 import { scaleForView, type ViewMode } from '../game/view';
+import { isLandCell } from '../game/world';
 
 interface Burst { x: number; y: number; life: number; color: string; text: string }
 export function hexCenter(t: Territory): { x: number; y: number } {
@@ -176,6 +177,7 @@ export class WorldRenderer {
       const frontier=t.neighbours.some(n=>state.territories[n].owner!==t.owner);
       this.drawHex(t,t.id===selected,t.id===this.hover,targets.includes(t.id),frontier,state.time,macro,operational);
     }
+    this.drawCoastalOutline(state);
     // Macro focus: continuous geopolitical borders and frontier concentrations.
     if (macro || operational) this.drawPoliticalBorders(state,macro);
     if (macro) this.drawStrategicLabels(state);
@@ -205,6 +207,25 @@ export class WorldRenderer {
       c.globalAlpha=1;
     }
     c.setTransform(this.dpr,0,0,this.dpr,0,0);
+  }
+  /** A proper coastline separates land theatre from open water at every zoom. */
+  private drawCoastalOutline(state:GameState):void {
+    const c=this.ctx;
+    c.save();c.lineWidth=this.viewMode==='strategic'?1.9:1.5;
+    c.shadowColor='#9abeba';c.shadowBlur=this.viewMode==='strategic'?4:2;
+    for(const t of state.territories){
+      if(t.terrain==='sea')continue;
+      const offshore=t.row%2===0
+        ? [[-1,0],[1,0],[-1,-1],[0,-1],[-1,1],[0,1]]
+        : [[-1,0],[1,0],[0,-1],[1,-1],[0,1],[1,1]];
+      if(!offshore.some(([dx,dy])=>!isLandCell(t.col+dx,t.row+dy)))continue;
+      const p=hexCenter(t);
+      if(p.x*this.scale+this.offsetX<-80||p.x*this.scale+this.offsetX>this.width+80)continue;
+      if(p.y*this.scale+this.offsetY<-80||p.y*this.scale+this.offsetY>this.height+80)continue;
+      c.strokeStyle='#8bb1ab7d';
+      tracePolygon(c,provinceOutline(t));c.stroke();
+    }
+    c.restore();
   }
   private drawPoliticalBorders(state: GameState, macro: boolean): void {
     const c=this.ctx;
@@ -241,7 +262,9 @@ export class WorldRenderer {
         clusters.set(key,{troops:t.troops,army:t,x:point.x,y:point.y,size:1,front});
       }else{
         item.troops+=t.troops;item.x+=point.x;item.y+=point.y;item.size++;
-        if(t.troops>item.army.troops || (front&&!item.front))item.army=t;
+        const contact=t.neighbours.some(id=>state.territories[id].owner==='player'&&t.owner!=='player');
+        const currentContact=item.army.neighbours.some(id=>state.territories[id].owner==='player'&&t.owner!=='player');
+        if((contact&&!currentContact)||(contact===currentContact&&(t.troops>item.army.troops||(front&&!item.front))))item.army=t;
         item.front ||= front;
       }
     }
@@ -297,9 +320,9 @@ export class WorldRenderer {
   private drawBackdrop(c: CanvasRenderingContext2D): void {
     // An uninterrupted dark theatre with subtle topographic lines, not a boxed board.
     const grad=c.createLinearGradient(0,0,this.width,this.height);
-    grad.addColorStop(0,'#101d22');grad.addColorStop(.55,'#0c171c');grad.addColorStop(1,'#070e13');
+    grad.addColorStop(0,'#112a33');grad.addColorStop(.55,'#0b202a');grad.addColorStop(1,'#07131d');
     c.fillStyle=grad;c.fillRect(0,0,this.width,this.height);
-    c.save();c.globalAlpha=.13;c.strokeStyle='#6c7e73';c.lineWidth=.85;
+    c.save();c.globalAlpha=.19;c.strokeStyle='#6faba7';c.lineWidth=.75;
     for(let j=0;j<17;j++){
       const base=(j/16)*this.height;
       c.beginPath();
