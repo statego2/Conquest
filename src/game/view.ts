@@ -21,7 +21,7 @@ export function resolveView(preference: ViewPreference, owned: number): ViewMode
 /** Responsive zoom for a landscape-first game. World coordinates stay identical. */
 export function scaleForView(mode: ViewMode, width: number, height: number): number {
   const w = Math.max(180, width), h = Math.max(160, height);
-  const fit = Math.min((w - 24) / WORLD_WIDTH, (h - 24) / WORLD_HEIGHT);
+  const fit = Math.min((w - 24) / WORLD_WIDTH, (h - (mode === 'strategic' ? 70 : 24)) / WORLD_HEIGHT);
   if (mode === 'strategic') return Math.max(0.13, Math.min(2.2, fit));
   if (mode === 'operational') return Math.max(0.43, Math.min(1.2, Math.max(fit * 2.1, 0.58)));
   return Math.max(1.24, Math.min(1.95, Math.max(fit * 4.2, 1.48)));
